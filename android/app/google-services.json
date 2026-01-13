@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1067080527526",
+    "project_id": "soniapublicschool-9cb19",
+    "storage_bucket": "soniapublicschool-9cb19.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1067080527526:android:7ccc1696e8ab0d8a880e67",
+        "android_client_info": {
+          "package_name": "com.sonia.apppro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGYoCb1V468ydsM1Q_c9_dY9dqUAXEKKI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

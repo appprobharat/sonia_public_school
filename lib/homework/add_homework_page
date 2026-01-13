@@ -1,0 +1,272 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class AddHomeworkPage extends StatefulWidget {
+  const AddHomeworkPage({super.key});
+
+  @override
+  State<AddHomeworkPage> createState() => _AddHomeworkPageState();
+}
+
+class _AddHomeworkPageState extends State<AddHomeworkPage> {
+  final titleController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final assignDateController = TextEditingController();
+  final submissionDateController = TextEditingController();
+
+  String? selectedClass;
+  String? selectedSection;
+  File? attachment;
+
+  bool isSubmitting = false;
+
+  final List<String> classes = ['1','2','3','4','5','6','7','8','9','10'];
+  final List<String> sections = ['A','B','C','D'];
+
+  Future<void> _pickDate(
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      controller.text = DateFormat('yyyy-MM-dd').format(picked);
+    }
+  }
+
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.single.path != null) {
+      if (!mounted) return;
+      setState(() {
+        attachment = File(result.files.single.path!);
+      });
+    }
+  }
+
+  // ====================================================
+  // 🔐 SAFE SUBMIT HOMEWORK (iOS + Android)
+  // ====================================================
+  Future<void> _submitHomework() async {
+    if (isSubmitting) return;
+
+    if (selectedClass == null ||
+        selectedSection == null ||
+        assignDateController.text.isEmpty ||
+        submissionDateController.text.isEmpty ||
+        titleController.text.trim().isEmpty ||
+        descriptionController.text.trim().isEmpty) {
+      _showSnack("Please fill all fields.");
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => isSubmitting = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null || token.isEmpty) {
+  _showSnack("Session expired. Please login again.");
+  if (mounted) setState(() => isSubmitting = false);
+  return;
+}
+
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://soniapublicschool.apppro.in/api/teacher/homework'),
+      );
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
+
+      request.fields.addAll({
+        'class': selectedClass!,
+        'section': selectedSection!,
+        'homework_title': titleController.text.trim(),
+        'remark': descriptionController.text.trim(),
+        'work_date': assignDateController.text.trim(),
+        'submission_date': submissionDateController.text.trim(),
+      });
+
+      if (attachment != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'attachment',
+            attachment!.path,
+          ),
+        );
+      }
+
+      final response = await request.send();
+      final body = await response.stream.bytesToString();
+
+      if (!mounted) return;
+      
+debugPrint("📎 Attachment Selected: ${attachment != null}");
+if (attachment != null) {
+  debugPrint("📎 Attachment Path: ${attachment!.path}");
+  debugPrint(
+    "📎 Attachment Size (MB): ${(attachment!.lengthSync() / (1024 * 1024)).toStringAsFixed(2)}",
+  );
+}
+
+debugPrint("🔐 Auth Token Exists: ${token.isNotEmpty}");
+
+      if (response.statusCode == 200) {
+        _showSnack("✅ Homework submitted successfully!");
+        Navigator.pop(context, true);
+      } else {
+        debugPrint("❌ Homework submit failed: $body");
+        _showSnack("❌ Submission failed. Please try again.");
+      }
+    } catch (e) {
+      debugPrint("❌ Homework error: $e");
+      _showSnack("Something went wrong");
+    } finally {
+      if (!mounted) return;
+      setState(() => isSubmitting = false);
+    }
+  }
+
+  void _showSnack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  // ====================================================
+  // 🧱 UI (UNCHANGED)
+  // ====================================================
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Homework'),
+        backgroundColor: Colors.deepPurple,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              DropdownButtonFormField<String>(
+                value: selectedClass,
+                decoration: const InputDecoration(
+                  labelText: 'Class',
+                  border: OutlineInputBorder(),
+                ),
+                items: classes
+                    .map((c) =>
+                        DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (v) => setState(() => selectedClass = v),
+              ),
+              const SizedBox(height: 12),
+
+              DropdownButtonFormField<String>(
+                value: selectedSection,
+                decoration: const InputDecoration(
+                  labelText: 'Section',
+                  border: OutlineInputBorder(),
+                ),
+                items: sections
+                    .map((s) =>
+                        DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (v) => setState(() => selectedSection = v),
+              ),
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: assignDateController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Assign Date',
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+                onTap: () => _pickDate(context, assignDateController),
+              ),
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: submissionDateController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Submission Date',
+                  border: OutlineInputBorder(),
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+                onTap: () => _pickDate(context, submissionDateController),
+              ),
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Homework Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: descriptionController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              ElevatedButton.icon(
+                onPressed: _pickFile,
+                icon: const Icon(Icons.attach_file),
+                label: Text(
+                  attachment != null ? 'File Selected' : 'Attach File',
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isSubmitting ? null : _submitHomework,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: isSubmitting
+                      ? const CircularProgressIndicator(
+                          color: Colors.white,
+                        )
+                      : const Text(
+                          "Submit",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
