@@ -59,10 +59,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyANbAKJT0MQpBzckAaIiH-6Y6cMNNT_Ogo',
-    appId: '1:1067080527526:ios:08aca00f1a88e892880e67',
+    appId: '1:1067080527526:ios:97afbb7aea4da7ab880e67',
     messagingSenderId: '1067080527526',
     projectId: 'soniapublicschool-9cb19',
     storageBucket: 'soniapublicschool-9cb19.firebasestorage.app',
-    iosBundleId: 'com.example.soniaPublicSchool',
+    iosBundleId: 'com.sonia.apppro',
   );
 }
