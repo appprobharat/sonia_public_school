@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:sonia_public_school/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -239,7 +240,6 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                       ),
                     ),
                   ),
-
                   title: Text(
                     name,
                     style: const TextStyle(fontWeight: FontWeight.w600),
@@ -276,12 +276,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                             ),
                             ElevatedButton.icon(
                               onPressed: () async {
-                                Navigator.pop(
-                                  confirmContext,
-                                ); // close confirm dialog
-                                Navigator.pop(
-                                  context,
-                                ); // close sibling list dialog safely
+                                Navigator.pop(confirmContext);
+                                Navigator.pop(context);
                                 if (!mounted) return;
                                 await _shiftLogin(studentId);
                               },
@@ -489,7 +485,6 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                       'DEBUG: Result not PAYMENT_COMPLETE/FAILED. Status check skipped.',
                     );
                     ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                      // ✅ dashboardContext
                       const SnackBar(
                         content: Text(
                           'Payment process abandoned. Status not confirmed.',
@@ -498,10 +493,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                     );
                   }
                 } else {
-                  // API Call failed
                   print('ERROR: initiatePayment failed (paymentData is null).');
                   ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                    // ✅ dashboardContext
                     const SnackBar(
                       content: Text(
                         'Could not initialize payment. Please try again.',
@@ -1239,6 +1232,18 @@ class LeftSidebarMenu extends StatelessWidget {
                 );
               },
             ),
+            // sidebarTile(
+            //   icon: Icons.dashboard,
+            //   context: context,
+            //   title: 'New Dashboard',
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => StudentDashboard()),
+            //     );
+            //   },
+            // ),
+
             sidebarTile(
               icon: Icons.person,
               context: context,
@@ -1284,6 +1289,17 @@ class LeftSidebarMenu extends StatelessWidget {
                 );
               },
             ),
+            // sidebarTile(
+            //   context: context,
+            //   icon: Icons.bus_alert,
+            //   title: 'Bus Tracking',
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => ParentBusTrackingPage()),
+            //     );
+            //   },
+            // ),
             sidebarTile(
               context: context,
               icon: Icons.calendar_month,
@@ -1423,9 +1439,17 @@ class LeftSidebarMenu extends StatelessWidget {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
-                          ApiService.post(context, "/logout");
+
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.clear();
+                          if (!context.mounted) return;
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (_) => LoginPage()),
+                            (route) => false,
+                          );
                         },
                         child: const Text("Logout"),
                       ),

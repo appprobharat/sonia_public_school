@@ -1,3 +1,4 @@
+import 'package:sonia_public_school/teacher/geo_attendance_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -57,7 +58,7 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
     if (photo.isEmpty) return '';
     return photo.startsWith('http')
         ? photo
-        : 'https://school.edusathi.in/$photo';
+        : '${ApiService.Url}/$photo';
   }
 
   void _navigate(BuildContext context, Widget page) {
@@ -77,7 +78,7 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
     try {
       if (token.isNotEmpty) {
         await http.post(
-          Uri.parse('https://school.edusathi.in/api/logout'),
+          Uri.parse('${ApiService.Url}/api/logout'),
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
@@ -155,12 +156,12 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             'Dashboard',
             () => _navigate(context, const TeacherDashboardScreen()),
           ),
-          // sidebarItem(
-          //   context,
-          //   Icons.person,
-          //   'Admin',
-          //   () => _navigate(context, const AdminDashboardPage()),
-          // ),
+          sidebarItem(
+            context,
+            Icons.person,
+            'Mark Geo Attd.',
+            () => _navigate(context, const GeoAttendanceTeacher()),
+          ),
           sidebarItem(
             context,
             Icons.person,

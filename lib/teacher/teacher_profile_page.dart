@@ -34,7 +34,6 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
     fetchTeacherProfile();
   }
 
-  // ---------------- LOAD LOCAL DATA ----------------
   Future<void> loadLocalInfo() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -55,7 +54,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
       '/teacher/profile',
     );
 
-    // Token expired → AuthHelper already logged out
+   
     if (response == null) return;
 
     if (!mounted) return;

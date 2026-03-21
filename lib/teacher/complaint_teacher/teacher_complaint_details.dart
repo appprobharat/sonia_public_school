@@ -30,7 +30,7 @@ class _TeacherComplaintDetailPageState
   bool isLoading = true;
 
   final String apiUrl =
-      'https://school.edusathi.in/api/teacher/complaint/history';
+      '${ApiService.Url}/api/teacher/complaint/history';
 
   @override
   void initState() {

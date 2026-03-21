@@ -10,318 +10,291 @@ class StudentAlertPage extends StatefulWidget {
 }
 
 class _StudentAlertPageState extends State<StudentAlertPage> {
-  TextEditingController searchController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
+  bool sending = false;
 
-  List<dynamic> students = [];
-  List<dynamic> filteredStudents = [];
-  Set<String> selectedStudentIds = {};
+  bool selectAll = true;
 
-  bool isLoading = false;
-  bool isSending = false; // 🔥 NEW → Loader for Send Button
-  bool selectAll = false;
+  final TextEditingController messageCtrl = TextEditingController();
 
+  bool hasLoadedData = false;
+  List<Map<String, dynamic>> students = [];
+  bool loadingStudents = false;
   @override
   void initState() {
     super.initState();
     fetchStudents();
   }
 
-  @override
-  void dispose() {
-    searchController.dispose();
-    descriptionController.dispose();
-    super.dispose();
-  }
-
   Future<void> fetchStudents() async {
-    if (!mounted) return;
+    setState(() => loadingStudents = true);
 
-    setState(() => isLoading = true);
-
-    try {
-   final res = await ApiService.post(
-  context,
-  "/teacher/student/list",
-);
-
-
-      // 🔐 AuthHelper handles 401 + logout
-      if (res == null) return;
-
-      debugPrint("📥 STUDENT LIST STATUS: ${res.statusCode}");
-      debugPrint("📥 STUDENT LIST BODY: ${res.body}");
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-
-        if (!mounted) return;
-        setState(() {
-          students = List<dynamic>.from(data);
-          filteredStudents = List<dynamic>.from(data);
-        });
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to load students")),
-        );
-      }
-    } catch (e) {
-      debugPrint("🚨 FETCH STUDENTS ERROR: $e");
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
-    } finally {
-      if (!mounted) return;
-      setState(() => isLoading = false);
-    }
-  }
-
-  void filterStudents(String query) {
-    if (!mounted) return;
-
-    setState(() {
-      filteredStudents = students
-          .where(
-            (s) => s["StudentName"].toString().toLowerCase().contains(
-              query.toLowerCase(),
-            ),
-          )
-          .toList();
-    });
-  }
-
-  // ====================================================
-  // 🔴 SEND ALERT (Loader Added)
-  // ====================================================
-  Future<void> sendAlert() async {
-    final message = descriptionController.text.trim();
-
-    // 🔒 Validation
-    if (message.isEmpty || selectedStudentIds.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("⚠️ Please enter message and select students"),
-        ),
-      );
-      return;
-    }
-
-    // 🔄 Start loader
-    if (!mounted) return;
-    setState(() => isSending = true);
-
-    try {
-      // 🔹 Collect FCM tokens safely
-      final List<String> tokens = [];
-
-      for (final student in students) {
-        final id = student["id"]?.toString();
-        final fcm = student["fcm_token"];
-
-        if (id != null &&
-            selectedStudentIds.contains(id) &&
-            fcm != null &&
-            fcm.toString().isNotEmpty) {
-          tokens.add(fcm.toString());
-        }
-      }
-
-      if (tokens.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("⚠️ No FCM token found")));
-        return;
-      }
-
-      final body = {"message": message, "tokens": tokens};
-
-      debugPrint("📤 ALERT BODY: $body");
-
-      // 🔐 SAFE API CALL (same pattern as dashboard)
     final res = await ApiService.post(
-  context,
-  "/teacher/student/alert",
-  body: body,
-);
+      context,
+      "/teacher/student/list",
+      body: {},
+    );
 
-      // ⚠️ AuthHelper already handles 401 + logout
-      if (res == null) return;
+    if (res != null && res.statusCode == 200) {
+      final List data = jsonDecode(res.body);
 
-      debugPrint("📥 ALERT STATUS: ${res.statusCode}");
-      debugPrint("📥 ALERT BODY: ${res.body}");
+      students = data.map((e) {
+        return {
+          "id": e["id"],
+          "name": e["StudentName"],
+          "father": e["FatherName"],
+          "roll": e["RollNo"],
+          "dob": e["DOB"],
+          "image": e["StudentPhoto"],
+          "selected": true,
+        };
+      }).toList();
 
-      if (res.statusCode == 200) {
-        if (!mounted) return;
+      selectAll = true;
+    }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Alert Sent Successfully")),
-        );
+    setState(() => loadingStudents = false);
+  }
 
-        descriptionController.clear();
-        setState(() {
-          selectAll = false;
-          selectedStudentIds.clear();
-        });
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("❌ Failed: ${res.body}")));
-      }
-    } catch (e) {
-      debugPrint("🚨 SEND ALERT ERROR: $e");
+  Future<void> sendAlert(List<int> studentIds) async {
+    setState(() => sending = true);
 
-      if (!mounted) return;
+    final res = await ApiService.post(
+      context,
+      "/teacher/student/alert",
+      body: {"message": messageCtrl.text.trim(), "student_ids": studentIds},
+    );
+
+    setState(() => sending = false);
+
+    if (res != null && res.statusCode == 200) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
-    } finally {
-      // 🔄 Stop loader safely
-      if (!mounted) return;
-      setState(() => isSending = false);
+      ).showSnackBar(const SnackBar(content: Text("Alert sent successfully")));
+      messageCtrl.clear();
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Failed to send alert")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xfff3e5f5),
       appBar: AppBar(
-        title: const Text("Student Alert"),
+        elevation: 0,
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        leading: BackButton(),
+        iconTheme: IconThemeData(color: Colors.white),
+        title: const Text(
+          "Student Alert",
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
       ),
 
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
-          : Column(
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          children: [
+            _messageBox(),
+            _selectAll(),
+            Expanded(child: _studentList()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _messageBox() {
+    return TextField(
+      controller: messageCtrl,
+      maxLines: 2,
+      style: const TextStyle(fontSize: 13),
+      decoration: InputDecoration(
+        hintText: "Enter your message here...",
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.all(10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _selectAll() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
               children: [
-                // MESSAGE BOX
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: descriptionController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: "Write alert message...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
+                Checkbox(
+                  value: selectAll,
+                  onChanged: (v) {
+                    setState(() {
+                      selectAll = v ?? false;
+                      for (var student in students) {
+                        student['selected'] = selectAll;
+                      }
+                    });
+                  },
                 ),
-
-                // SEARCH BOX
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: searchController,
-                    onChanged: filterStudents,
-                    decoration: InputDecoration(
-                      hintText: "Search Student...",
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // SELECT ALL
-                Row(
-                  children: [
-                    Checkbox(
-                      value: selectAll,
-                      onChanged: (val) {
-                        if (!mounted) return;
-
-                        setState(() {
-                          selectAll = val ?? false;
-
-                          if (selectAll && filteredStudents.isNotEmpty) {
-                            selectedStudentIds = filteredStudents
-                                .map((s) => s["id"].toString())
-                                .toSet();
-                          } else {
-                            selectedStudentIds.clear();
-                          }
-                        });
-                      },
-                    ),
-                    const Text("Select All Students"),
-                  ],
-                ),
-
-                // STUDENT LIST
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: filteredStudents.length,
-                    itemBuilder: (context, index) {
-                      final student = filteredStudents[index];
-                      final id = student["id"].toString();
-                      final isChecked = selectedStudentIds.contains(id);
-
-                      return Card(
-                        child: ListTile(
-                          leading: Checkbox(
-                            value: isChecked,
-                            onChanged: (val) {
-                              setState(() {
-                                if (val == true) {
-                                  selectedStudentIds.add(id);
-                                } else {
-                                  selectedStudentIds.remove(id);
-                                }
-                                selectAll =
-                                    selectedStudentIds.length ==
-                                    filteredStudents.length;
-                              });
-                            },
-                          ),
-                          title: Text(student["StudentName"]),
-                          subtitle: Text(
-                            "Father: ${student["FatherName"]}\nRoll: ${student["RollNo"]}",
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // SEND BUTTON (with loader)
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.all(14),
-                      ),
-                      onPressed: isSending ? null : sendAlert,
-                      child: isSending
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              "Send Alert",
-                              style: TextStyle(fontSize: 16),
-                            ),
-                    ),
-                  ),
-                ),
+                const Text("Select All", style: TextStyle(fontSize: 13)),
               ],
             ),
+          ),
+          SizedBox(
+            height: 36,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: sending ? Colors.green.shade300 : Colors.green,
+                disabledBackgroundColor: Colors.green.shade300,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: sending
+                  ? null
+                  : () {
+                      final selectedStudents = students
+                          .where((s) => s['selected'] == true)
+                          .toList();
+
+                      if (selectedStudents.isEmpty ||
+                          messageCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Select students & enter message"),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final selectedIds = selectedStudents
+                          .map<int>((s) => s['id'] as int)
+                          .toList();
+
+                      sendAlert(selectedIds);
+                    },
+              child: sending
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.send, size: 16, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          "Send",
+                          style: TextStyle(fontSize: 13, color: Colors.white),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _studentList() {
+    if (loadingStudents) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (students.isEmpty) {
+      return const Center(child: Text("No students found"));
+    }
+
+    return ListView.builder(
+      itemCount: students.length,
+      itemBuilder: (context, index) {
+        final s = students[index];
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: s['selected'],
+                onChanged: (v) {
+                  setState(() {
+                    s['selected'] = v;
+                    selectAll = students.every(
+                      (stu) => stu['selected'] == true,
+                    );
+                  });
+                },
+              ),
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: s['image'] != null
+                    ? NetworkImage(s['image'])
+                    : null,
+                backgroundColor: Colors.grey.shade300,
+                child: s['image'] == null
+                    ? const Icon(Icons.person, size: 22)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s['name'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      "Father: ${s['father']}",
+                      style: const TextStyle(fontSize: 12),
+                    ),
+
+                    Text(
+                      "Roll No: ${s['roll']}",
+                      style: const TextStyle(fontSize: 12),
+                    ),
+
+                    Text(
+                      "DOB: ${s['dob']}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.deepPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

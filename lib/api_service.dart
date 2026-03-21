@@ -9,6 +9,7 @@ import 'login_page.dart';
 class ApiService {
   /// 🔥 CHANGE ONLY HERE
   static const String baseUrl = "https://soniapublicschool.apppro.in/api";
+  static const String Url = "https://soniapublicschool.apppro.in";
 
   /// ⏱ Timeout (iOS safe)
   static const Duration timeout = Duration(seconds: 20);
@@ -31,7 +32,10 @@ class ApiService {
 
     return prefs.getString('auth_token') ?? '';
   }
-
+  static Future<Map<String, String>> multipartHeaders() async {
+    final token = await _getToken();
+    return {'Authorization': 'Bearer $token', 'Accept': 'application/json'};
+  }
   // ================= LOGOUT =================
 
   static Future<void> forceLogout(BuildContext context) async {

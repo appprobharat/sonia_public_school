@@ -7,7 +7,6 @@ import 'package:sonia_public_school/api_service.dart';
 import 'package:sonia_public_school/teacher/teacher_homework_detail_page.dart';
 import 'package:sonia_public_school/teacher/teacher_homework_page.dart';
 
-
 class TeacherRecentHomeworks extends StatelessWidget {
   final List<Map<String, dynamic>> homeworks;
 
@@ -91,12 +90,12 @@ class TeacherRecentHomeworks extends StatelessWidget {
                                   return;
                                 }
 
-                                // ✅ Teacher homework FINAL S3 URL
                                 final String fileUrl =
                                     attachment.toString().startsWith('http')
                                     ? attachment.toString()
-                                    : 'https://s3.ap-south-1.amazonaws.com/'
-                                          'school.edusathi.in/homeworks/$attachment';
+                                    : ApiService.homeworkAttachment(
+                                        attachment.toString(),
+                                      );
 
                                 debugPrint(
                                   "📎 TEACHER HW DOWNLOAD URL: $fileUrl",
@@ -152,6 +151,7 @@ class TeacherRecentHomeworks extends StatelessWidget {
         await file.writeAsBytes(response.bodyBytes, flush: true);
 
         if (!context.mounted) return;
+        await OpenFile.open(file.path);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("File saved to Downloads folder")),
         );

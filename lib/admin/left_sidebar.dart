@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:sonia_public_school/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -69,7 +70,7 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
                       ? NetworkImage(
                           teacherPhoto.startsWith('http')
                               ? teacherPhoto
-                              : 'https://school.edusathi.in/$teacherPhoto',
+                              : '${ApiService.Url}/$teacherPhoto',
                         )
                       : const AssetImage('assets/images/logo.png')
                             as ImageProvider,
@@ -114,12 +115,6 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
               MaterialPageRoute(builder: (_) => const TeacherDashboardScreen()),
             );
           }),
-          // sidebarItem(context, Icons.person, 'Admin', () {
-          //   Navigator.push(
-          //     context,
-          //     MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
-          //   );
-          // }),
           sidebarItem(context, Icons.person, 'Profile', () {
             Navigator.push(
               context,
@@ -261,7 +256,7 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
                         final token = prefs.getString('token') ?? '';
 
                         final response = await http.post(
-                          Uri.parse('https://school.edusathi.in/api/logout'),
+                          Uri.parse('${ApiService.Url}/api/logout'),
                           headers: {
                             'Authorization': 'Bearer $token',
                             'Accept': 'application/json',

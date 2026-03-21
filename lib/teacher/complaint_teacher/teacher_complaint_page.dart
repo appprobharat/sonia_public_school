@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sonia_public_school/api_service.dart';
 
-
 class TeacherComplaintPage extends StatefulWidget {
   final int complaintId;
   final String date;
@@ -39,7 +38,7 @@ class _TeacherComplaintPageState extends State<TeacherComplaintPage> {
 
       final response = await ApiService.post(
         context,
-        'https://school.edusathi.in/api/teacher/complaint/history',
+        '${ApiService.baseUrl}/teacher/complaint/history',
         body: {'ComplaintId': widget.complaintId},
       );
 
@@ -119,7 +118,9 @@ class _TeacherComplaintPageState extends State<TeacherComplaintPage> {
         foregroundColor: Colors.white,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(

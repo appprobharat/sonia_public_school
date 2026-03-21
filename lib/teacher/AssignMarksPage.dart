@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sonia_public_school/api_service.dart';
-
+import 'package:flutter/services.dart';
 
 class AssignMarksPage extends StatefulWidget {
   const AssignMarksPage({super.key});
@@ -13,15 +13,12 @@ class AssignMarksPage extends StatefulWidget {
 class _AssignMarksPageState extends State<AssignMarksPage> {
   String? selectedExamId;
   String? selectedSubjectId;
-
   List exams = [];
   List subjects = [];
   List students = [];
   List filteredStudents = [];
-
   bool isLoading = false;
   bool isSubmitting = false;
-
   String searchQuery = '';
 
   final TextEditingController totalMarkController = TextEditingController();
@@ -49,10 +46,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
   // ---------------- EXAMS ----------------
   Future<void> fetchExams() async {
     try {
-      final response = await ApiService.post(
-        context,
-        "/get_exam",
-      );
+      final response = await ApiService.post(context, "/get_exam");
 
       if (response == null || !mounted) return;
 
@@ -73,10 +67,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
   // ---------------- SUBJECTS ----------------
   Future<void> fetchSubjects() async {
     try {
-      final response = await ApiService.post(
-        context,
-        "/get_subject",
-      );
+      final response = await ApiService.post(context, "/get_subject");
 
       if (response == null || !mounted) return;
 
@@ -170,8 +161,6 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
 
   // ---------------- SUBMIT ----------------
   Future<void> updateMarks() async {
-    // validation unchanged
-
     setState(() => isSubmitting = true);
 
     final payload = {
@@ -228,7 +217,6 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
   // ---------------- UI (UNCHANGED) ----------------
   @override
   Widget build(BuildContext context) {
-    // ⛔ UI untouched as requested
     return Scaffold(
       appBar: AppBar(
         title: const Text("Assign Marks"),
@@ -495,6 +483,10 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
                                 ),
                                 keyboardType: TextInputType.number,
 
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+
                                 onChanged: (val) {
                                   setState(() {
                                     for (var s in students) {
@@ -520,6 +512,10 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
                                 keyboardType: TextInputType.numberWithOptions(
                                   decimal: true,
                                 ),
+
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                                 controller: obtainControllers[student['id']],
                                 onChanged: (val) {
                                   student['GetMark'] = val;
@@ -558,7 +554,10 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
                 ),
             ],
           ),
-          if (isLoading) const Center(child: CircularProgressIndicator(color: AppColors.primary),),
+          if (isLoading)
+            const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
         ],
       ),
     );

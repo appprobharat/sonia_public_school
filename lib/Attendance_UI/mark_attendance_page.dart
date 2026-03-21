@@ -17,7 +17,7 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
   String selectedCommonStatus = "";
   List<Map<String, dynamic>> students = [];
   List<Map<String, dynamic>> filteredStudents = [];
-
+  String attendanceType = "create";
   bool isLoading = false;
   bool isSubmitting = false;
 
@@ -33,9 +33,6 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
     super.dispose();
   }
 
-  // ====================================================
-  // 🔐 SAFE FETCH STUDENTS (iOS + Android)
-  // ====================================================
   Future<void> fetchStudents() async {
     if (!mounted) return;
 
@@ -48,7 +45,6 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
         body: {'Date': DateFormat('yyyy-MM-dd').format(selectedDate)},
       );
 
-      // AuthHelper already handles 401 + logout
       if (res == null) return;
 
       debugPrint("📥 ATTENDANCE STATUS: ${res.statusCode}");
@@ -93,9 +89,6 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
     }
   }
 
-  // ====================================================
-  // 🔎 SEARCH
-  // ====================================================
   void filterSearch(String query) {
     if (!mounted) return;
 
@@ -112,22 +105,22 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
     });
   }
 
-  // ====================================================
-  // 📅 DATE PICKER
-  // ====================================================
-  Future<void> pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2023),
-      lastDate: DateTime.now(),
-    );
+  // // ====================================================
+  // // 📅 DATE PICKER
+  // // ====================================================
+  // Future<void> pickDate() async {
+  //   final picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: selectedDate,
+  //     firstDate: DateTime(2023),
+  //     lastDate: DateTime.now(),
+  //   );
 
-    if (picked != null) {
-      setState(() => selectedDate = picked);
-      fetchStudents();
-    }
-  }
+  //   if (picked != null) {
+  //     setState(() => selectedDate = picked);
+  //     fetchStudents();
+  //   }
+  // }
 
   // ====================================================
   // 🟢 MARK ALL
@@ -280,6 +273,20 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
     );
   }
 
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      setState(() => selectedDate = picked);
+      fetchStudents();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -289,269 +296,381 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
         iconTheme: const IconThemeData(color: Colors.white),
         foregroundColor: Colors.white,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today, color: AppColors.primary),
-                const SizedBox(width: 10),
-                Text("Date: ${DateFormat('dd-MM-yyyy').format(selectedDate)}"),
-                const Spacer(),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                  ),
-                  onPressed: pickDate,
-                  icon: const Icon(Icons.edit_calendar, color: Colors.white),
-                  label: const Text(
-                    "Pick Date",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText: "Search student...",
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                filled: true,
-                fillColor: AppColors.primary.shade50,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
-                ),
-              ),
-              onChanged: filterSearch,
-            ),
-          ),
-
-          if (students.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              color: Colors.grey.shade100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  buildCircleButton("Present", "P"),
-                  buildCircleButton("Absent", "A"),
-                  buildCircleButton("Holiday", "H"),
+                  // DATE
+                  Expanded(
+                    flex: 2,
+                    child: GestureDetector(
+                      onTap: _selectDate,
+                      child: _dateField(
+                        "${selectedDate.day}-${selectedDate.month}-${selectedDate.year}",
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // TYPE DROPDOWN
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      height: 38,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: attendanceType,
+                          isExpanded: true,
+                          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black,
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: "create",
+                              child: Text("Create"),
+                            ),
+                            DropdownMenuItem(
+                              value: "update",
+                              child: Text("Update"),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() {
+                              attendanceType = v;
+                            });
+                            fetchStudents();
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
 
-          if (isLoading) const Center(child: CircularProgressIndicator(color: AppColors.primary),),
-          if (!isLoading && students.isNotEmpty)
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredStudents.length,
-                itemBuilder: (context, index) {
-                  final student = filteredStudents[index];
+              const SizedBox(height: 6),
+              Text(
+                "Selected Date: ${selectedDate.day}-${selectedDate.month}-${selectedDate.year}",
+                style: const TextStyle(fontSize: 11, color: Colors.black54),
+              ),
 
-                  // final status = student['Status'];
-
-                  return Card(
-                    color:
-                        (student['Status'] == null ||
-                            student['Status'] == 'not_marked')
-                        ? Colors.grey.shade200
-                        : Colors.white,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+              const SizedBox(height: 9),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: SizedBox(
+                  height: 40,
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: filterSearch,
+                    style: const TextStyle(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: "Search student...",
+                      hintStyle: const TextStyle(fontSize: 13),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Roll No: ${student['RollNo']}",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "Name: ${student['StudentName'] ?? 'Name Missing'}",
-                                  style: const TextStyle(fontSize: 13),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  "Father: ${student['FatherName'] ?? ''}",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                  ),
+                ),
+              ),
 
-                          /// RIGHT SIDE - Status buttons
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
+              if (students.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  color: Colors.grey.shade100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      buildCircleButton("Present", "P"),
+                      buildCircleButton("Absent", "A"),
+                      buildCircleButton("Holiday", "H"),
+                    ],
+                  ),
+                ),
+
+              if (isLoading)
+                const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
+              if (!isLoading && students.isNotEmpty)
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: filteredStudents.length,
+                    itemBuilder: (context, index) {
+                      final student = filteredStudents[index];
+
+                      // final status = student['Status'];
+
+                      return Card(
+                        color:
+                            (student['Status'] == null ||
+                                student['Status'] == 'not_marked')
+                            ? Colors.grey.shade200
+                            : Colors.white,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  buildStatusButton(
-                                    "P",
-                                    "P",
-                                    () => markSingle(index, "P"),
-                                    student['Status'] == "P",
-                                  ),
-                                  buildStatusButton(
-                                    "A",
-                                    "A",
-                                    () => markSingle(index, "A"),
-                                    student['Status'] == "A",
-                                  ),
-                                  buildStatusButton(
-                                    "L",
-                                    "L",
-                                    () => markSingle(index, "L"),
-                                    student['Status'] == "L",
-                                  ),
-                                ],
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Roll No: ${student['RollNo']}",
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "Name: ${student['StudentName'] ?? 'Name Missing'}",
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "Father: ${student['FatherName'] ?? ''}",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 6),
-                              Row(
+
+                              /// RIGHT SIDE - Status buttons
+                              Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  buildStatusButton(
-                                    "HF",
-                                    "HF",
-                                    () => markSingle(index, "HF"),
-                                    student['Status'] == "HF",
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      buildStatusButton(
+                                        "P",
+                                        "P",
+                                        () => markSingle(index, "P"),
+                                        student['Status'] == "P",
+                                      ),
+                                      buildStatusButton(
+                                        "A",
+                                        "A",
+                                        () => markSingle(index, "A"),
+                                        student['Status'] == "A",
+                                      ),
+                                      buildStatusButton(
+                                        "L",
+                                        "L",
+                                        () => markSingle(index, "L"),
+                                        student['Status'] == "L",
+                                      ),
+                                    ],
                                   ),
-                                  buildStatusButton(
-                                    "H",
-                                    "H",
-                                    () => markSingle(index, "H"),
-                                    student['Status'] == "H",
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      buildStatusButton(
+                                        "HF",
+                                        "HF",
+                                        () => markSingle(index, "HF"),
+                                        student['Status'] == "HF",
+                                      ),
+                                      buildStatusButton(
+                                        "H",
+                                        "H",
+                                        () => markSingle(index, "H"),
+                                        student['Status'] == "H",
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          if (!isLoading && students.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: isSubmitting
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
-                    : ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        onPressed: () async {
-                          bool? confirm = await showDialog(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              title: const Text('Confirm Submission'),
-                              content: const Text(
-                                'Are you sure you want to submit the attendance?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Submit'),
-                                ),
-                              ],
+                      );
+                    },
+                  ),
+                ),
+
+              if (!isLoading && students.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: isSubmitting
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
                             ),
-                          );
-
-                          if (confirm == true) {
-                            final unmarkedStudents = students
-                                .where(
-                                  (s) =>
-                                      s['Status'] == null ||
-                                      s['Status'].toString().trim().isEmpty ||
-                                      s['Status'].toString().toLowerCase() ==
-                                          'not_marked',
-                                )
-                                .toList();
-
-                            if (unmarkedStudents.isNotEmpty) {
-                              showDialog(
+                          )
+                        : ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () async {
+                              bool? confirm = await showDialog(
                                 context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Row(
-                                    children: const [
-                                      Icon(Icons.warning, color: Colors.red),
-                                      SizedBox(width: 9),
-                                      Text(
-                                        "Incomplete Attendance",
-                                        style: TextStyle(fontSize: 18),
-                                      ),
-                                    ],
-                                  ),
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Confirm Submission'),
                                   content: const Text(
-                                    "⚠️ Please mark attendance for all students before submitting.",
-                                    style: TextStyle(fontSize: 14),
+                                    'Are you sure you want to submit the attendance?',
                                   ),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text(
-                                        "OK",
-                                        style: TextStyle(color: Colors.red),
-                                      ),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('Submit'),
                                     ),
                                   ],
                                 ),
                               );
 
-                              return; // stop submission
-                            }
+                              if (confirm == true) {
+                                final unmarkedStudents = students
+                                    .where(
+                                      (s) =>
+                                          s['Status'] == null ||
+                                          s['Status']
+                                              .toString()
+                                              .trim()
+                                              .isEmpty ||
+                                          s['Status']
+                                                  .toString()
+                                                  .toLowerCase() ==
+                                              'not_marked',
+                                    )
+                                    .toList();
 
-                            // If all students are marked
-                            submitAttendance();
-                          }
-                        },
-                        child: const Text(
-                          "Update Attendance",
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ),
-              ),
+                                if (unmarkedStudents.isNotEmpty) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Row(
+                                        children: const [
+                                          Icon(
+                                            Icons.warning,
+                                            color: Colors.red,
+                                          ),
+                                          SizedBox(width: 9),
+                                          Text(
+                                            "Incomplete Attendance",
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                        ],
+                                      ),
+                                      content: const Text(
+                                        "⚠️ Please mark attendance for all students before submitting.",
+                                        style: TextStyle(fontSize: 14),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text(
+                                            "OK",
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  return; // stop submission
+                                }
+
+                                // If all students are marked
+                                submitAttendance();
+                              }
+                            },
+                            child: const Text(
+                              "Update Attendance",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dateField(String date) {
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 10),
+          const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Expanded(child: Text(date, style: const TextStyle(fontSize: 12))),
+          Container(
+            height: double.infinity,
+            width: 38,
+            decoration: const BoxDecoration(
+              color: Color(0xffEAF6EF),
+              borderRadius: BorderRadius.horizontal(right: Radius.circular(8)),
             ),
+            child: const Icon(
+              Icons.calendar_month,
+              size: 16,
+              color: AppColors.primary,
+            ),
+          ),
         ],
       ),
     );

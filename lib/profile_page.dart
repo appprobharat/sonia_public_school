@@ -115,7 +115,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return NetworkImage(
       studentPhoto.startsWith('http')
           ? studentPhoto
-          : 'https://school.edusathi.in/$studentPhoto',
+          : '${ApiService.Url}/$studentPhoto',
     );
   }
 
@@ -131,85 +131,97 @@ class _ProfilePageState extends State<ProfilePage> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 45,
-                            backgroundImage: _profileImage(),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  studentName,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 45,
+                              backgroundImage: _profileImage(),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    studentName,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text("Class: $className - $section"),
-                                Text("Roll No: $rollNo"),
-                              ],
+                                  const SizedBox(height: 5),
+                                  Text("Class: $className - $section"),
+                                  Text("Roll No: $rollNo"),
+                                ],
+                              ),
                             ),
+                          ],
+                        ),
+                        const Divider(height: 30),
+                        buildInfoRow(Icons.people, "Father's Name", fatherName),
+                        buildInfoRow(Icons.people, "Mother's Name", motherName),
+                        buildInfoRow(Icons.person, "Gender", gender),
+                        buildInfoRow(Icons.phone, "Contact", contact),
+                        buildInfoRow(Icons.cake, "Date Of Birth", dob),
+                        buildInfoRow(
+                          Icons.calendar_today,
+                          "Admission Date",
+                          adDate,
+                        ),
+                        buildInfoRow(
+                          Icons.card_membership,
+                          "Ledger No.",
+                          ledNo,
+                        ),
+                        buildInfoRow(
+                          Icons.self_improvement,
+                          "Religion",
+                          religion,
+                        ),
+                        buildInfoRow(Icons.badge, "Category", category),
+                        buildInfoRow(Icons.label_important, "Caste", caste),
+                        buildInfoRow(
+                          Icons.water_drop,
+                          "Blood Group",
+                          bloodGroup,
+                        ),
+                        buildInfoRow(Icons.location_on, "Address", address),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ChangePasswordPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.lock, color: Colors.white),
+                          label: const Text(
+                            "Change Password",
+                            style: TextStyle(color: Colors.white),
                           ),
-                        ],
-                      ),
-                      const Divider(height: 30),
-                      buildInfoRow(Icons.people, "Father's Name", fatherName),
-                      buildInfoRow(Icons.people, "Mother's Name", motherName),
-                      buildInfoRow(Icons.person, "Gender", gender),
-                      buildInfoRow(Icons.phone, "Contact", contact),
-                      buildInfoRow(Icons.cake, "Date Of Birth", dob),
-                      buildInfoRow(
-                        Icons.calendar_today,
-                        "Admission Date",
-                        adDate,
-                      ),
-                      buildInfoRow(Icons.card_membership, "Ledger No.", ledNo),
-                      buildInfoRow(
-                        Icons.self_improvement,
-                        "Religion",
-                        religion,
-                      ),
-                      buildInfoRow(Icons.badge, "Category", category),
-                      buildInfoRow(Icons.label_important, "Caste", caste),
-                      buildInfoRow(Icons.water_drop, "Blood Group", bloodGroup),
-                      buildInfoRow(Icons.location_on, "Address", address),
-                      const SizedBox(height: 10),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ChangePasswordPage(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.lock, color: Colors.white),
-                        label: const Text(
-                          "Change Password",
-                          style: TextStyle(color: Colors.white),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                          ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
