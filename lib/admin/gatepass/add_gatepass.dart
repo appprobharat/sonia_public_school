@@ -230,25 +230,26 @@ class _AddGatePassPageState extends State<AddGatePassPage> {
     }
 
     /// REASON VALIDATION
-  if (reasonCtrl.text.trim().isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Reason is required"),
-        backgroundColor: Colors.red,
-      ),
-    );
-    return;
-  }
-/// APPROVER VALIDATION
-if (selectedApproverId.isEmpty) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text("Please select approver"),
-      backgroundColor: Colors.red,
-    ),
-  );
-  return;
-}
+    if (reasonCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Reason is required"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    /// APPROVER VALIDATION
+    if (selectedApproverId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select approver"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     final Map<String, String> body = {
       "UserType": selectedType == "Student" ? "std" : "emp",
       "id": selectedUserId ?? "",

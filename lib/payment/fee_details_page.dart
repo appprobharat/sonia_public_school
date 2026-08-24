@@ -10,8 +10,6 @@ class FeeDetailsPage extends StatefulWidget {
 }
 
 class _FeeDetailsPageState extends State<FeeDetailsPage> {
-  
-
   final List<String> months = [
     'April',
     'May',
@@ -59,7 +57,7 @@ class _FeeDetailsPageState extends State<FeeDetailsPage> {
     try {
       final response = await ApiService.post(
         context,
-       "/student/fee",
+        "/student/fee",
         body: {'Month': monthKey},
       );
 

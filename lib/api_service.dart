@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -32,10 +33,16 @@ class ApiService {
 
     return prefs.getString('auth_token') ?? '';
   }
+
   static Future<Map<String, String>> multipartHeaders() async {
     final token = await _getToken();
     return {'Authorization': 'Bearer $token', 'Accept': 'application/json'};
   }
+
+  static Future<Map<String, String>> headers() async {
+    return await _headers();
+  }
+
   // ================= LOGOUT =================
 
   static Future<void> forceLogout(BuildContext context) async {
@@ -131,18 +138,74 @@ class ApiService {
     final token = await _getToken();
 
     if (token.isEmpty) {
+      debugPrint("❌ No Token Found");
+      await forceLogout(context);
+      return null;
+    }
+
+    final url = "$baseUrl$endpoint";
+    final headers = await _headers();
+    final requestBody = jsonEncode(body ?? {});
+
+  
+
+    try {
+      final response = await http
+          .post(Uri.parse(url), headers: headers, body: requestBody)
+          .timeout(timeout);
+
+      if (response.statusCode == 401) {
+        debugPrint("❌ Unauthorized (401)");
+        await forceLogout(context);
+        return null;
+      }
+
+      return response;
+    } on TimeoutException {
+      debugPrint("⏱ API TIMEOUT : $url");
+      return null;
+    } catch (e, stackTrace) {
+      debugPrint("❌ API ERROR : $e");
+      debugPrint(stackTrace.toString());
+      return null;
+    }
+  }
+
+  static Future<http.StreamedResponse?> multipartPost(
+    BuildContext context,
+    String endpoint, {
+    Map<String, String>? fields,
+    File? file,
+    String fileKey = 'Attachment',
+  }) async {
+    final token = await _getToken();
+
+    if (token.isEmpty) {
       await forceLogout(context);
       return null;
     }
 
     try {
-      final response = await http
-          .post(
-            Uri.parse("$baseUrl$endpoint"),
-            headers: await _headers(),
-            body: jsonEncode(body ?? {}),
-          )
-          .timeout(timeout);
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse("$baseUrl$endpoint"),
+      );
+
+      request.headers.addAll(await multipartHeaders());
+
+      // ✅ FIELDS
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      // ✅ FILE
+      if (file != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(fileKey, file.path),
+        );
+      }
+
+      final response = await request.send();
 
       if (response.statusCode == 401) {
         await forceLogout(context);
@@ -152,6 +215,11 @@ class ApiService {
       return response;
     } on TimeoutException {
       debugPrint("⏱ API TIMEOUT: $endpoint");
+
+      return null;
+    } catch (e) {
+      debugPrint("❌ MULTIPART ERROR => $e");
+
       return null;
     }
   }
@@ -198,16 +266,6 @@ class ApiService {
   // ================= ATTACHMENTS =================
   static const siblingUrl =
       'https://soniapublicschool.apppro.in/uploads/no_image.png';
-  static const String s3Base =
-      "https://s3.ap-south-1.amazonaws.com/soniapublicschool.apppro.in";
-
-  static String attachmentUrl(String schoolId, String folder, String file) {
-    return "$s3Base/documents/$schoolId/$folder/$file";
-  }
-
-  static String homeworkAttachment(String fileName) {
-    return "$s3Base/homeworks/$fileName";
-  }
 }
 
 class AppColors {
@@ -216,6 +274,11 @@ class AppColors {
   static const danger = Colors.red;
   static const info = Colors.blue;
   static const designerColor = Colors.redAccent;
+  static const LinearGradient appBarGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFDC2626), Color(0xFFEF4444), Color(0xFFF87171)],
+  );
 }
 
 class AppAssets {

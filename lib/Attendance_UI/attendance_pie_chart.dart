@@ -23,7 +23,6 @@ class AttendancePieChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
 
-    // Base size that looks good on regular screens
     double baseChartRadius = 140;
 
     double chartRadius = screenWidth < 360

@@ -90,9 +90,14 @@ class _EarningExpenseChartState extends State<EarningExpenseChart> {
     double getMaxY() {
       double maxIncome = income.reduce((a, b) => a > b ? a : b);
       double maxExpense = expense.reduce((a, b) => a > b ? a : b);
+
       double maxValue = maxIncome > maxExpense ? maxIncome : maxExpense;
 
-      return (maxValue * 1.4); 
+      if (maxValue <= 0) {
+        return 10;
+      }
+
+      return maxValue * 1.4;
     }
 
     if (isLoading) {

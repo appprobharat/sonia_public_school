@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sonia_public_school/api_service.dart';
 import 'package:sonia_public_school/changePasswordPage.dart';
 
-
 class TeacherProfilePage extends StatefulWidget {
   const TeacherProfilePage({super.key});
 
@@ -47,39 +46,35 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   }
 
   // ---------------- FETCH PROFILE ----------------
- Future<void> fetchTeacherProfile() async {
-  try {
-    final response = await ApiService.post(
-      context,
-      '/teacher/profile',
-    );
+  Future<void> fetchTeacherProfile() async {
+    try {
+      final response = await ApiService.post(context, '/teacher/profile');
 
-   
-    if (response == null) return;
+      if (response == null) return;
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-    setState(() {
-      gender = data['Gender'] ?? '';
-      employeeId = data['EmployeeId'] ?? '';
-      relativeName = data['RelativeName'] ?? '';
-      dob = data['DOB'] ?? '';
-      doj = data['DOJ'] ?? '';
-      contact = data['ContactNo']?.toString() ?? '';
-      qualification = data['EmpQualification'] ?? '';
-      address = data['Address'] ?? '';
-      isLoading = false;
-    });
-  } catch (e) {
-    if (!mounted) return;
-    setState(() => isLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Failed to load profile")),
-    );
+      setState(() {
+        gender = data['Gender'] ?? '';
+        employeeId = data['EmployeeId'] ?? '';
+        relativeName = data['RelativeName'] ?? '';
+        dob = data['DOB'] ?? '';
+        doj = data['DOJ'] ?? '';
+        contact = data['ContactNo']?.toString() ?? '';
+        qualification = data['EmpQualification'] ?? '';
+        address = data['Address'] ?? '';
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Failed to load profile")));
+    }
   }
-}
 
   // ---------------- UI ----------------
   @override
@@ -94,7 +89,9 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Card(
@@ -112,9 +109,8 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                             radius: 45,
                             backgroundImage: photo.isNotEmpty
                                 ? NetworkImage(photo)
-                                : const AssetImage(
-                                    'assets/images/logo_new.png',
-                                  ) as ImageProvider,
+                                : const AssetImage('assets/images/logo_new.png')
+                                      as ImageProvider,
                           ),
                           const SizedBox(width: 20),
                           Expanded(
@@ -139,12 +135,20 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
                       const Divider(height: 30, thickness: 1),
 
                       buildInfoRow(Icons.badge, "Employee ID", employeeId),
-                      buildInfoRow(Icons.person_outline, "Relative Name", relativeName),
+                      buildInfoRow(
+                        Icons.person_outline,
+                        "Relative Name",
+                        relativeName,
+                      ),
                       buildInfoRow(Icons.male, "Gender", gender),
                       buildInfoRow(Icons.phone, "Contact No.", contact),
                       buildInfoRow(Icons.cake, "Date of Birth", dob),
                       buildInfoRow(Icons.calendar_month, "Joining Date", doj),
-                      buildInfoRow(Icons.school, "Qualification", qualification),
+                      buildInfoRow(
+                        Icons.school,
+                        "Qualification",
+                        qualification,
+                      ),
                       buildInfoRow(Icons.location_on, "Address", address),
 
                       const SizedBox(height: 20),

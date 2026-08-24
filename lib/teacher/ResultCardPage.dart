@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sonia_public_school/api_service.dart';
 
-
 class ResultCardPage extends StatefulWidget {
   const ResultCardPage({super.key});
 
@@ -37,10 +36,7 @@ class _ResultCardPageState extends State<ResultCardPage> {
   // ---------------- FETCH EXAMS ----------------
   Future<void> fetchExams() async {
     try {
-      final response = await ApiService.post(
-        context,
-        "/get_exam",
-      );
+      final response = await ApiService.post(context, "/get_exam");
 
       if (response == null) return;
       if (!mounted) return;
@@ -226,7 +222,11 @@ class _ResultCardPageState extends State<ResultCardPage> {
             // ---------------- RESULTS ----------------
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
                   : filteredResults.isEmpty
                   ? const Center(child: Text('No results found.'))
                   : ListView.builder(

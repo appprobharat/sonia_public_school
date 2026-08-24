@@ -33,105 +33,98 @@ class _TeacherAddComplaintPageState extends State<TeacherAddComplaintPage> {
   }
 
   // ---------------- FETCH STUDENTS ----------------
- Future<void> fetchStudents() async {
-  debugPrint("🟡 fetchStudents START");
+  Future<void> fetchStudents() async {
+    debugPrint("🟡 fetchStudents START");
 
-  try {
-    final response = await ApiService.post(
-      context,
-      '/get_student',
-    );
+    try {
+      final response = await ApiService.post(context, '/get_student');
 
-    // token expired → AuthHelper logout kara dega
-    if (response == null || !mounted) return;
+      // token expired → AuthHelper logout kara dega
+      if (response == null || !mounted) return;
 
-    debugPrint("🟢 STATUS CODE: ${response.statusCode}");
-    debugPrint("📦 RAW BODY: ${response.body}");
+      debugPrint("🟢 STATUS CODE: ${response.statusCode}");
+      debugPrint("📦 RAW BODY: ${response.body}");
 
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
 
+        setState(() {
+          students = decoded is List ? decoded : [];
+          isLoadingStudents = false;
+        });
+
+        debugPrint("📊 STUDENT COUNT: ${students.length}");
+      } else {
+        setState(() => isLoadingStudents = false);
+        _showSnackBar("Failed to load students");
+      }
+    } catch (e) {
+      debugPrint("❌ fetchStudents ERROR: $e");
+      if (!mounted) return;
       setState(() {
-        students = decoded is List ? decoded : [];
+        students = [];
         isLoadingStudents = false;
       });
-
-      debugPrint("📊 STUDENT COUNT: ${students.length}");
-    } else {
-      setState(() => isLoadingStudents = false);
-      _showSnackBar("Failed to load students");
+      _showSnackBar("Error loading students");
     }
-  } catch (e) {
-    debugPrint("❌ fetchStudents ERROR: $e");
-    if (!mounted) return;
-    setState(() {
-      students = [];
-      isLoadingStudents = false;
-    });
-    _showSnackBar("Error loading students");
+
+    debugPrint("🔚 fetchStudents END");
   }
-
-  debugPrint("🔚 fetchStudents END");
-}
-
 
   // ---------------- SUBMIT COMPLAINT ----------------
- Future<void> submitComplaint() async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> submitComplaint() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  if (selectedStudentId == null) {
-    _showSnackBar("Please select a student");
-    return;
-  }
-
-  setState(() => isSubmitting = true);
-
-  debugPrint("🟡 submitComplaint START");
-
-  try {
-    final response = await ApiService.post(
-      context,
-      '/teacher/complaint/store',
-      body: {
-        'StudentId': selectedStudentId.toString(),
-        'Description': descriptionController.text.trim(),
-      },
-    );
-
-    if (response == null || !mounted) {
-      if (mounted) setState(() => isSubmitting = false);
+    if (selectedStudentId == null) {
+      _showSnackBar("Please select a student");
       return;
     }
 
-    debugPrint("🟢 STATUS CODE: ${response.statusCode}");
-    debugPrint("📦 RAW BODY: ${response.body}");
+    setState(() => isSubmitting = true);
 
-    final decoded = jsonDecode(response.body);
+    debugPrint("🟡 submitComplaint START");
 
-    setState(() => isSubmitting = false);
+    try {
+      final response = await ApiService.post(
+        context,
+        '/teacher/complaint/store',
+        body: {
+          'StudentId': selectedStudentId.toString(),
+          'Description': descriptionController.text.trim(),
+        },
+      );
 
-    if (response.statusCode == 200 && decoded['status'] == true) {
-      _showSnackBar(decoded['message'] ?? "Complaint submitted");
-      Navigator.pop(context, true);
-    } else {
-      _showSnackBar(decoded['message'] ?? "Submission failed");
+      if (response == null || !mounted) {
+        if (mounted) setState(() => isSubmitting = false);
+        return;
+      }
+
+      debugPrint("🟢 STATUS CODE: ${response.statusCode}");
+      debugPrint("📦 RAW BODY: ${response.body}");
+
+      final decoded = jsonDecode(response.body);
+
+      setState(() => isSubmitting = false);
+
+      if (response.statusCode == 200 && decoded['status'] == true) {
+        _showSnackBar(decoded['message'] ?? "Complaint submitted");
+        Navigator.pop(context, true);
+      } else {
+        _showSnackBar(decoded['message'] ?? "Submission failed");
+      }
+    } catch (e) {
+      debugPrint("❌ submitComplaint ERROR: $e");
+      if (!mounted) return;
+      setState(() => isSubmitting = false);
+      _showSnackBar("Something went wrong");
     }
-  } catch (e) {
-    debugPrint("❌ submitComplaint ERROR: $e");
-    if (!mounted) return;
-    setState(() => isSubmitting = false);
-    _showSnackBar("Something went wrong");
+
+    debugPrint("🔚 submitComplaint END");
   }
-
-  debugPrint("🔚 submitComplaint END");
-}
-
 
   void _showSnackBar(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   // ---------------- UI (UNCHANGED) ----------------

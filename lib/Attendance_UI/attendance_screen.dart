@@ -1,8 +1,8 @@
 import 'dart:convert';
+import 'package:sonia_public_school/Attendance_UI/attendance_report_list.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sonia_public_school/api_service.dart';
-
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -21,7 +21,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   int _half = 0;
   int _holiday = 0;
   String? _selectedDate;
-
   bool _isLoading = false;
 
   @override
@@ -30,9 +29,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     _fetchAttendance();
   }
 
-  // ====================================================
-  // 🔐 SAFE ATTENDANCE FETCH (iOS + Android)
-  // ====================================================
   Future<void> _fetchAttendance({String? selectedDate}) async {
     if (!mounted) return;
 
@@ -42,14 +38,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         selectedDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     try {
-     final res = await ApiService.post(
-  context,
-  "/teacher/std_attendance/report",
-  body: {'Date': dateToSend},
-);
+      final res = await ApiService.post(
+        context,
+        "/teacher/std_attendance/report",
+        body: {'Date': dateToSend},
+      );
 
-
-      // 🔐 AuthHelper handles 401 + logout
       if (res == null) return;
 
       debugPrint("📥 ATTENDANCE STATUS: ${res.statusCode}");
@@ -71,7 +65,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             for (final item in (data['days'] ?? []))
               item['date'].toString(): item['status'] ?? 0,
           };
-
           _selectedDate = dateToSend;
         });
       } else {
@@ -84,9 +77,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       debugPrint("🚨 ATTENDANCE ERROR: $e");
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Something went wrong")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
     } finally {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -116,14 +109,74 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 12),
-                _buildCalendarContainer(
-                  year,
-                  month,
-                  daysInMonth,
-                  startWeekday,
-                ),
+                _buildCalendarContainer(year, month, daysInMonth, startWeekday),
                 const SizedBox(height: 10),
                 _buildSummaryBoxes(),
+
+                const SizedBox(height: 12),
+
+                InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AttendanceReportListPage(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xff2563EB), Color(0xff3B82F6)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.analytics_outlined,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Attendance Details",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                "View student-wise attendance report",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -132,9 +185,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               child: Container(
                 color: Colors.black.withOpacity(0.1),
                 child: const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               ),
             ),
@@ -142,8 +193,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
     );
   }
-
-  // ===================== UI (UNCHANGED) =====================
 
   Widget _buildCalendarContainer(
     int year,
@@ -260,8 +309,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color:
-                          isSelected ? Colors.green.shade50 : Colors.white,
+                      color: isSelected ? Colors.green.shade50 : Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isSelected
@@ -275,8 +323,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       children: [
                         Text(
                           '$day',
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         Positioned(
                           bottom: 4,
@@ -310,19 +357,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: const BoxDecoration(
                 color: Colors.grey,
-                borderRadius:
-                    BorderRadius.only(topLeft: Radius.circular(10)),
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(10)),
               ),
               child: Text(
-                'Date Record (${DateFormat('dd-MMM-yyyy').format(
-                  _selectedDate != null
-                      ? DateTime.parse(_selectedDate!)
-                      : DateTime.now(),
-                )})',
+                'Date Record (${DateFormat('dd-MMM-yyyy').format(_selectedDate != null ? DateTime.parse(_selectedDate!) : DateTime.now())})',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -354,11 +395,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildStatusBox('HALF-DAY', _half, Colors.blue),
-                    _buildStatusBox(
-                      'HOLIDAY',
-                      _holiday,
-                      Colors.brown,
-                    ),
+                    _buildStatusBox('HOLIDAY', _holiday, Colors.brown),
                   ],
                 ),
               ],

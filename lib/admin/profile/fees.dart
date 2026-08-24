@@ -104,15 +104,15 @@ class _AdminFeesPageState extends State<AdminFeesPage> {
   }
 
   Widget _card(ClassFeesModel e) {
-  double percent = 0.0;
+    double percent = 0.0;
 
-if (e.totalFees > 0) {
-  percent = e.collectedFees / e.totalFees;
-  if (percent < 0) percent = 0;
-  if (percent > 1) percent = 1;
-}
+    if (e.totalFees > 0) {
+      percent = e.collectedFees / e.totalFees;
+      if (percent < 0) percent = 0;
+      if (percent > 1) percent = 1;
+    }
 
-final percentText = (percent * 100).toStringAsFixed(0);
+    final percentText = (percent * 100).toStringAsFixed(0);
     Color performanceColor;
 
     if (e.totalFees == 0) {
@@ -287,7 +287,8 @@ final percentText = (percent * 100).toStringAsFixed(0);
       ),
     );
   }
- String _monthName(int month) {
+
+  String _monthName(int month) {
     const months = [
       "Jan",
       "Feb",
@@ -304,6 +305,7 @@ final percentText = (percent * 100).toStringAsFixed(0);
     ];
     return months[month - 1];
   }
+
   Future<void> pickMonth() async {
     int tempYear = selectedMonth.year;
     int tempMonth = selectedMonth.month;
@@ -409,6 +411,7 @@ final percentText = (percent * 100).toStringAsFixed(0);
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

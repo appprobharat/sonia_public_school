@@ -56,20 +56,20 @@ class _AdminComplaintListState extends State<AdminComplaintList> {
     );
 
     if (picked != null) {
-    if (isFrom && picked.isAfter(DateTime.parse(toDate))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("From date cannot be after To date")),
-      );
-      return;
-    }
+      if (isFrom && picked.isAfter(DateTime.parse(toDate))) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("From date cannot be after To date")),
+        );
+        return;
+      }
 
-    if (!isFrom && picked.isBefore(DateTime.parse(fromDate))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("To date cannot be before From date")),
-      );
-      return;
-    }
-      
+      if (!isFrom && picked.isBefore(DateTime.parse(fromDate))) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("To date cannot be before From date")),
+        );
+        return;
+      }
+
       String formatted = _formatDate(picked);
 
       setState(() {
@@ -141,8 +141,6 @@ class _AdminComplaintListState extends State<AdminComplaintList> {
     }
     setState(() {});
   }
-
- 
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +292,10 @@ class _AdminComplaintListState extends State<AdminComplaintList> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => AdminComplaintHistory(complaintId: data['id'],  complaintData: data,),
+            builder: (_) => AdminComplaintHistory(
+              complaintId: data['id'],
+              complaintData: data,
+            ),
           ),
         );
       },

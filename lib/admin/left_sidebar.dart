@@ -40,7 +40,6 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
   void initState() {
     super.initState();
     loadTeacherInfo();
-   
   }
 
   Future<void> loadTeacherInfo() async {

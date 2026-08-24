@@ -15,6 +15,17 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   DateTime _focusedMonth = DateTime.now();
   Map<String, String> _attendanceMap = {};
   bool _isLoading = false;
+  double _attendancePercentage(Map<String, int> totals) {
+    final workingDays =
+        totals['Present']! +
+        totals['Absent']! +
+        totals['Leave']! +
+        totals['HalfDay']!;
+
+    if (workingDays == 0) return 0;
+
+    return (totals['Present']! / workingDays) * 100;
+  }
 
   @override
   void initState() {
@@ -22,9 +33,6 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     _fetchAttendance();
   }
 
-  // ====================================================
-  // 🔐 SAFE FETCH ATTENDANCE (iOS + Android)
-  // ====================================================
   Future<void> _fetchAttendance() async {
     if (!mounted) return;
 
@@ -127,20 +135,35 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'My Attendance',
-          style: TextStyle(color: Colors.white),
-        ),
         backgroundColor: AppColors.primary,
+        elevation: 0,
+        centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_month_rounded, color: Colors.white, size: 22),
+            SizedBox(width: 8),
+            Text(
+              "My Attendance",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                letterSpacing: .3,
+              ),
+            ),
+          ],
+        ),
       ),
       body: Stack(
         children: [
           Column(
             children: [
-              const SizedBox(height: 12),
+              _buildOverviewCard(totals),
+
               _buildCalendarContainer(year, month, daysInMonth, startWeekday),
-              const SizedBox(height: 10),
+
               _buildSummaryBox(totals),
             ],
           ),
@@ -158,9 +181,6 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     );
   }
 
-  // ====================================================
-  // 📅 CALENDAR UI (UNCHANGED)
-  // ====================================================
   Widget _buildCalendarContainer(
     int year,
     int month,
@@ -168,59 +188,98 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     int startWeekday,
   ) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xffE5E7EB), width: 1),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withOpacity(.06),
+            blurRadius: 20,
+            spreadRadius: 1,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       child: Column(
         children: [
           // Month Header
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
             decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
               gradient: LinearGradient(
-                colors: [Color(0xFF6A1B9A), Color(0xFF8E24AA)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xff2563EB),
+                  Color(0xff3B82F6),
+                  Color(0xff60A5FA),
+                ],
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Colors.white),
-                  onPressed: () {
-                    setState(() {
-                      _focusedMonth = DateTime(
-                        _focusedMonth.year,
-                        _focusedMonth.month - 1,
-                      );
-                    });
-                    _fetchAttendance();
-                  },
-                ),
-                Text(
-                  DateFormat.yMMMM().format(_focusedMonth),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.chevron_left_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _focusedMonth = DateTime(
+                          _focusedMonth.year,
+                          _focusedMonth.month - 1,
+                        );
+                      });
+                      _fetchAttendance();
+                    },
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Colors.white),
-                  onPressed: () {
-                    setState(() {
-                      _focusedMonth = DateTime(
-                        _focusedMonth.year,
-                        _focusedMonth.month + 1,
-                      );
-                    });
-                    _fetchAttendance();
-                  },
+                Column(
+                  children: [
+                    Text(
+                      DateFormat.yMMMM().format(_focusedMonth),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      "Attendance Calendar",
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _focusedMonth = DateTime(
+                          _focusedMonth.year,
+                          _focusedMonth.month + 1,
+                        );
+                      });
+                      _fetchAttendance();
+                    },
+                  ),
                 ),
               ],
             ),
@@ -236,9 +295,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                       child: Center(
                         child: Text(
                           d,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w600,
+                          style: const TextStyle(
+                            color: Color(0xff64748B),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
                           ),
                         ),
                       ),
@@ -267,7 +327,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                 final date = DateTime(year, month, day);
                 final dateStr = DateFormat('yyyy-MM-dd').format(date);
                 final status = _attendanceMap[dateStr] ?? 'Not Marked';
-
+                final isToday =
+                    date.day == DateTime.now().day &&
+                    date.month == DateTime.now().month &&
+                    date.year == DateTime.now().year;
                 Color dotColor;
                 switch (status) {
                   case 'Present':
@@ -289,18 +352,42 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                     dotColor = Colors.grey;
                 }
 
-                return Container(
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
+                    color: isToday
+                        ? const Color(0xffDBEAFE)
+                        : Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isToday
+                          ? const Color(0xff2563EB)
+                          : Colors.grey.shade200,
+                      width: isToday ? 2 : 1,
+                    ),
+                    boxShadow: [
+                      if (isToday)
+                        BoxShadow(
+                          color: const Color(0xff2563EB).withOpacity(.20),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                    ],
                   ),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Text(
-                        '$day',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        "$day",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: isToday
+                              ? const Color(0xff1D4ED8)
+                              : status == "Absent"
+                              ? Colors.red
+                              : Colors.black87,
+                        ),
                       ),
                       Positioned(
                         bottom: 4,
@@ -310,6 +397,12 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                           decoration: BoxDecoration(
                             color: dotColor,
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: dotColor.withOpacity(.45),
+                                blurRadius: 5,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -390,6 +483,130 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
           style: const TextStyle(fontSize: 11, color: Colors.black54),
         ),
       ],
+    );
+  }
+
+  Widget _buildOverviewCard(Map<String, int> totals) {
+    final percent = _attendancePercentage(totals);
+
+    final workingDays =
+        totals['Present']! +
+        totals['Absent']! +
+        totals['Leave']! +
+        totals['HalfDay']!;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xff1D4ED8), Color(0xff2563EB), Color(0xff60A5FA)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(.20),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 58,
+            width: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(.18),
+              border: Border.all(color: Colors.white24),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              "${percent.toStringAsFixed(0)}%",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Attendance Overview",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 3),
+
+                Text(
+                  "$workingDays Working Days",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(.85),
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    _miniStat(
+                      Icons.check_circle,
+                      Colors.greenAccent,
+                      totals['Present']!,
+                    ),
+                    const SizedBox(width: 15),
+                    _miniStat(
+                      Icons.cancel,
+                      Colors.redAccent,
+                      totals['Absent']!,
+                    ),
+                    const SizedBox(width: 15),
+                    _miniStat(Icons.calendar_today, Colors.amber, workingDays),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniStat(IconData icon, Color color, int value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.14),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 5),
+          Text(
+            "$value",
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

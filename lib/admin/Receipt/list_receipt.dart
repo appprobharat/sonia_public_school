@@ -86,6 +86,12 @@ class _AdminReceiptPageState extends State<AdminReceiptPage> {
     );
   }
 
+  double get totalAmount {
+    return filteredReceipts.fold(0.0, (sum, item) {
+      return sum + (double.tryParse(item.amount) ?? 0);
+    });
+  }
+
   final TextEditingController searchCtrl = TextEditingController();
   @override
   void initState() {
@@ -173,7 +179,8 @@ class _AdminReceiptPageState extends State<AdminReceiptPage> {
     if (response != null && response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       allReceipts = data.map((e) => ReceiptModel.fromJson(e)).toList();
-      filteredReceipts = List.from(allReceipts);
+
+      _applyFilter();
     }
 
     setState(() => isLoading = false);
@@ -240,6 +247,47 @@ class _AdminReceiptPageState extends State<AdminReceiptPage> {
       body: Column(
         children: [
           _filterBar(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+
+                  const Expanded(
+                    child: Text(
+                      "Total Receipt Amount",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  Text(
+                    "₹ ${totalAmount.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())

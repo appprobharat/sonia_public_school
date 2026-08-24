@@ -28,7 +28,12 @@ class _GeoAttendanceTeacherState extends State<GeoAttendanceTeacher> {
   @override
   void initState() {
     super.initState();
-    fetchSchoolLocation();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await checkPermission();
+      getLocation();
+      fetchSchoolLocation();
+    });
   }
 
   /// GET SCHOOL LOCATION FROM API
@@ -136,60 +141,61 @@ class _GeoAttendanceTeacherState extends State<GeoAttendanceTeacher> {
   }
 
   /// MARK ATTENDANCE
-Future<void> markAttendance() async {
-  if (attendanceStatus == "marked") {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Attendance already marked")),
-    );
-    return;
-  }
-
-  if (!isInside) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("You are outside school campus")),
-    );
-    return;
-  }
-
-  setState(() => isLoading = true);
-
-  try {
-    final response = await ApiService.post(
-      context,
-      "/teacher/mark-attendance",
-      body: {
-        "latitude": position!.latitude,
-        "longitude": position!.longitude,
-        "distance": distance,
-      },
-    );
-
-    if (response != null) {
-      final data = jsonDecode(response.body);
-
-      if (data["status"] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data["message"] ?? "Attendance marked")),
-        );
-
-        setState(() {
-          attendanceStatus = "marked";
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data["message"] ?? "Attendance failed")),
-        );
-      }
+  Future<void> markAttendance() async {
+    if (attendanceStatus == "marked") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Attendance already marked")),
+      );
+      return;
     }
-  } catch (e) {
-    debugPrint("Attendance error: $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Something went wrong")),
-    );
+
+    if (!isInside) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You are outside school campus")),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final response = await ApiService.post(
+        context,
+        "/teacher/mark-attendance",
+        body: {
+          "latitude": position!.latitude,
+          "longitude": position!.longitude,
+          "distance": distance,
+        },
+      );
+
+      if (response != null) {
+        final data = jsonDecode(response.body);
+
+        if (data["status"] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data["message"] ?? "Attendance marked")),
+          );
+
+          setState(() {
+            attendanceStatus = "marked";
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data["message"] ?? "Attendance failed")),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Attendance error: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
+    }
+
+    setState(() => isLoading = false);
   }
 
-  setState(() => isLoading = false);
-}
   /// UI
   @override
   Widget build(BuildContext context) {
@@ -333,7 +339,7 @@ Future<void> markAttendance() async {
                           const Divider(),
 
                           const SizedBox(height: 10),
-              
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [

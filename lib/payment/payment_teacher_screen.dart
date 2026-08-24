@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sonia_public_school/api_service.dart';
 
-
 class PaymentTeacherScreen extends StatefulWidget {
   const PaymentTeacherScreen({super.key});
 
@@ -11,7 +10,6 @@ class PaymentTeacherScreen extends StatefulWidget {
 }
 
 class _PaymentTeacherScreenState extends State<PaymentTeacherScreen> {
-
   List<dynamic> payments = [];
   bool isLoading = true;
 
@@ -30,10 +28,9 @@ class _PaymentTeacherScreenState extends State<PaymentTeacherScreen> {
     try {
       final response = await ApiService.post(
         context,
-       "/teacher/payment" , // already full URL
+        "/teacher/payment", // already full URL
       );
 
-      // 🔐 If token invalid → auto logout already handled
       if (response == null) {
         if (!mounted) return;
         setState(() {

@@ -119,116 +119,231 @@ class _ComplaintDetailPageState extends State<ComplaintDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 🔷 Original Complaint
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.date_range,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(.08),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.calendar_today_rounded,
+                                size: 16,
                                 color: AppColors.primary,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
+                            ),
+
+                            const SizedBox(width: 8),
+
+                            Expanded(
+                              child: Text(
                                 formatDate(widget.date),
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
                                 ),
                               ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: getStatusColor(
-                                    widget.status,
-                                  ).withOpacity(0.1),
-                                  border: Border.all(
-                                    color: getStatusColor(widget.status),
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  getStatusText(widget.status),
-                                  style: TextStyle(
-                                    color: getStatusColor(widget.status),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            ),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
                               ),
-                            ],
+                              decoration: BoxDecoration(
+                                color: getStatusColor(
+                                  widget.status,
+                                ).withOpacity(.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    widget.status == 1
+                                        ? Icons.check_circle
+                                        : Icons.schedule,
+                                    size: 13,
+                                    color: getStatusColor(widget.status),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    getStatusText(widget.status),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: getStatusColor(widget.status),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          widget.description.replaceAll(r'\r\n', '\n'),
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            height: 1.5,
+                            color: Colors.grey.shade800,
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            widget.description.replaceAll(r'\r\n', '\n'),
-                            style: const TextStyle(fontSize: 15),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // 🧾 History
-                  const Text(
-                    "Complaint History",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.history_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Complaint History",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   if (history.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 30),
-                      child: Center(child: Text("No history found.")),
-                    )
-                  else
-                    ...history.map(
-                      (item) => Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                      child: Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.timeline,
-                                    size: 18,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    formatDate(item['Date'] ?? ''),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                              Icon(
+                                Icons.history_toggle_off_rounded,
+                                size: 65,
+                                color: Colors.grey,
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 12),
+                              const Text(
+                                "No History Found",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
                               Text(
-                                item['Description']?.replaceAll(
-                                      r'\r\n',
-                                      '\n',
-                                    ) ??
-                                    '',
-                                style: const TextStyle(fontSize: 14),
+                                "Updates will appear here.",
+                                style: TextStyle(color: Colors.grey),
                               ),
                             ],
                           ),
+                        ),
+                      ),
+                    )
+                  else
+                    ...history.map(
+                      (item) => Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              children: [
+                                Container(
+                                  width: 14,
+                                  height: 14,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                Container(
+                                  width: 2,
+                                  height: 75,
+                                  color: Colors.blue.shade100,
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(width: 12),
+
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(.04),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.access_time_filled,
+                                          size: 15,
+                                          color: AppColors.primary,
+                                        ),
+
+                                        const SizedBox(width: 5),
+
+                                        Text(
+                                          formatDate(item['Date'] ?? ''),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(height: 8),
+
+                                    Text(
+                                      item['Description']?.replaceAll(
+                                            r'\r\n',
+                                            '\n',
+                                          ) ??
+                                          '',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade700,
+                                        height: 1.45,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

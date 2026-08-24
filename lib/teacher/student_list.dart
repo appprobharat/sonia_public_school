@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:sonia_public_school/api_service.dart';
 
-
 class StudentListPage extends StatefulWidget {
   const StudentListPage({super.key});
 
@@ -32,6 +31,7 @@ class _StudentListPageState extends State<StudentListPage> {
       final response = await ApiService.post(
         context,
         '/teacher/student/list',
+        body: {"type": "all"},
       );
 
       if (response == null) {
@@ -88,11 +88,11 @@ class _StudentListPageState extends State<StudentListPage> {
   // ---------------- DATE FORMAT ----------------
   String formatDate(String? dob) {
     if (dob == null || dob.isEmpty) return 'N/A';
+
     try {
-      final date = DateTime.parse(dob);
-      return "${date.day.toString().padLeft(2, '0')}-"
-          "${date.month.toString().padLeft(2, '0')}-"
-          "${date.year}";
+      final parts = dob.split('-'); // dd-MM-yyyy
+
+      return "${parts[0]}-${parts[1]}-${parts[2]}"; // same format return
     } catch (_) {
       return 'Invalid';
     }
@@ -107,6 +107,7 @@ class _StudentListPageState extends State<StudentListPage> {
           'Student List',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        centerTitle: true,
         backgroundColor: AppColors.primary,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -121,8 +122,31 @@ class _StudentListPageState extends State<StudentListPage> {
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : _students.isEmpty
-          ? const Center(
-              child: Text('No students found', style: TextStyle(fontSize: 16)),
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.groups_rounded,
+                    size: 70,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    "No Students Found",
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Student records will appear here.",
+                    style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(10),
@@ -130,39 +154,152 @@ class _StudentListPageState extends State<StudentListPage> {
               itemBuilder: (context, index) {
                 final student = _students[index];
 
-                return Card(
-                  elevation: 3,
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                return InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {},
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
                       children: [
-                        Text(
-                          student['StudentName'] ?? 'Unknown',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                        /// Avatar
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            color: Colors.grey.shade200,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(22),
+                            child: Image.network(
+                              student['StudentPhoto'] ?? "",
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) {
+                                return Center(
+                                  child: Text(
+                                    (student['StudentName'] ?? "S")
+                                        .toString()[0]
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+
+                                return const Center(
+                                  child: SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Roll No: ${student['RollNo'] ?? '-'}",
-                          style: const TextStyle(fontSize: 15),
+                        const SizedBox(width: 10),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      student['StudentName'] ?? "-",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(.10),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      "Roll ${student['RollNo'] ?? '-'}",
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 5),
+
+                              Text(
+                                student['FatherName'] ?? "-",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+
+                              const SizedBox(height: 3),
+
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.cake_outlined,
+                                    size: 13,
+                                    color: Colors.orange.shade600,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    formatDate(student['DOB']),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Father: ${student['FatherName'] ?? '-'}",
-                          style: const TextStyle(fontSize: 15),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "DOB: ${formatDate(student['DOB'])}",
-                          style: const TextStyle(fontSize: 15),
+
+                        const SizedBox(width: 6),
+
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.grey.shade400,
+                          size: 20,
                         ),
                       ],
                     ),

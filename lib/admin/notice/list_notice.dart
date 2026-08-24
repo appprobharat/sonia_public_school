@@ -351,10 +351,7 @@ class _NoticeListPageState extends State<NoticeListPage> {
     if (isDownloading) return;
     isDownloading = true;
 
-    // ✅ URL now comes from ApiService
-    final fullUrl = filePath.startsWith('http')
-        ? filePath
-        : ApiService.homeworkAttachment(filePath);
+    final fullUrl = filePath.toString();
 
     try {
       final fileName = fullUrl.split('/').last;

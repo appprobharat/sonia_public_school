@@ -19,6 +19,7 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
   bool hasLoadedData = false;
   List<Map<String, dynamic>> students = [];
   bool loadingStudents = false;
+  
   @override
   void initState() {
     super.initState();
@@ -31,7 +32,7 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
     final res = await ApiService.post(
       context,
       "/teacher/student/list",
-      body: {},
+   body: {"type": "all"},
     );
 
     if (res != null && res.statusCode == 200) {

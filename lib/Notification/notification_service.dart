@@ -7,9 +7,9 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
-    'edusathi_channel',
-    'EduSathi Notifications',
-    description: 'Notifications for EduSathi app',
+    'sonia_channel',
+    'SONIA PUBLIC SCHOOL Notifications',
+    description: 'Notifications for SONIA PUBLIC SCHOOL app',
     importance: Importance.high,
   );
 
@@ -84,7 +84,7 @@ class NotificationService {
 
       await _notificationsPlugin.show(
         DateTime.now().millisecondsSinceEpoch ~/ 1000,
-        notification.title ?? 'EduSathi',
+        notification.title ?? 'SONIA PUBLIC SCHOOL',
         notification.body ?? '',
         details,
         payload: message.data.isNotEmpty ? message.data.toString() : null,

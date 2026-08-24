@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:sonia_public_school/api_service.dart';
 
@@ -22,9 +21,7 @@ class _AddComplaintPageState extends State<AddComplaint> {
     if (description.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter a complaint description"),
-        ),
+        const SnackBar(content: Text("Please enter a complaint description")),
       );
       return;
     }
@@ -38,9 +35,7 @@ class _AddComplaintPageState extends State<AddComplaint> {
       final res = await ApiService.post(
         context,
         "/student/complaint/store",
-        body: {
-          "Description": description,
-        },
+        body: {"Description": description},
       );
 
       // AuthHelper already handles 401 + logout
@@ -57,26 +52,20 @@ class _AddComplaintPageState extends State<AddComplaint> {
         Navigator.pop(context); // back to list
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Complaint submitted successfully"),
-          ),
+          const SnackBar(content: Text("Complaint submitted successfully")),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Failed to submit complaint"),
-          ),
+          const SnackBar(content: Text("Failed to submit complaint")),
         );
       }
     } catch (e) {
       debugPrint("🚨 COMPLAINT ERROR: $e");
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Something went wrong"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
     } finally {
       if (!mounted) return;
       setState(() => isSubmitting = false);

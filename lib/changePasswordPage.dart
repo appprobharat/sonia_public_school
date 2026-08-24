@@ -17,95 +17,89 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   bool isSubmitting = false;
 
- Future<void> handleChangePassword() async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> handleChangePassword() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  final currentPass = currentController.text.trim();
-  final newPass = newController.text.trim();
-  final confirmPass = confirmController.text.trim();
+    final currentPass = currentController.text.trim();
+    final newPass = newController.text.trim();
+    final confirmPass = confirmController.text.trim();
 
-  if (currentPass == newPass) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("New password cannot be same as current password"),
-      ),
-    );
-    return;
-  }
-
-  if (newPass != confirmPass) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("New password and confirm password do not match"),
-      ),
-    );
-    return;
-  }
-
-  final confirmed = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      title: const Text("Confirm Change"),
-      content: const Text("Are you sure you want to change your password?"),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text("Cancel"),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text("Yes"),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmed != true) return;
-
-  if (!mounted) return;
-  setState(() => isSubmitting = true);
-
-  try {
-    final response = await ApiService.post(
-      context,
-      '/password',
-      body: {
-        'current_pass': currentPass,
-        'new_pass': newPass,
-      },
-    );
-
-    if (!mounted) return;
-    setState(() => isSubmitting = false);
-
-    // 🔐 Auto logout already handled inside AuthHelper
-    if (response == null) return;
-
-    final data = jsonDecode(response.body);
-
-    if (data['status'] == true) {
+    if (currentPass == newPass) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password changed successfully!")),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(data['message'] ?? "Password change failed"),
+        const SnackBar(
+          content: Text("New password cannot be same as current password"),
         ),
       );
+      return;
     }
-  } catch (e) {
-    if (!mounted) return;
-    setState(() => isSubmitting = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Network error: $e")),
+    if (newPass != confirmPass) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("New password and confirm password do not match"),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Confirm Change"),
+        content: const Text("Are you sure you want to change your password?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text("Yes"),
+          ),
+        ],
+      ),
     );
-  }
-}
 
+    if (confirmed != true) return;
+
+    if (!mounted) return;
+    setState(() => isSubmitting = true);
+
+    try {
+      final response = await ApiService.post(
+        context,
+        '/password',
+        body: {'current_pass': currentPass, 'new_pass': newPass},
+      );
+
+      if (!mounted) return;
+      setState(() => isSubmitting = false);
+
+      // 🔐 Auto logout already handled inside AuthHelper
+      if (response == null) return;
+
+      final data = jsonDecode(response.body);
+
+      if (data['status'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Password changed successfully!")),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? "Password change failed")),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isSubmitting = false);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Network error: $e")));
+    }
+  }
 
   @override
   void dispose() {
@@ -177,8 +171,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           "Submit",
-                          style:
-                              TextStyle(fontSize: 16, color: Colors.white),
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                 ),
               ),

@@ -84,11 +84,7 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
   // ---------------- FILE DOWNLOAD (IOS + ANDROID SAFE) ----------------
   Future<void> downloadFile(BuildContext context, String attachmentPath) async {
     try {
-      final String fileUrl = attachmentPath.startsWith('http')
-          ? attachmentPath
-          : ApiService.homeworkAttachment(attachmentPath);
-
-      debugPrint("⬇️ Download URL: $fileUrl");
+      final String fileUrl = attachmentPath.toString();
 
       final response = await http
           .get(Uri.parse(fileUrl))
@@ -152,6 +148,33 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : homeworks.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.assignment_outlined,
+                    size: 70,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "No Homework Found",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Tap + to create a new homework.",
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+            )
+          : homeworks.isEmpty
           ? const Center(child: Text('No homework found.'))
           : ListView.builder(
               padding: const EdgeInsets.all(12),
@@ -160,7 +183,8 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
                 final hw = homeworks[index];
                 final attachmentUrl = hw['Attachment'];
 
-                return GestureDetector(
+                return InkWell(
+                  borderRadius: BorderRadius.circular(16),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -169,98 +193,213 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
                       ),
                     );
                   },
-                  child: Card(
-                    elevation: 4,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            hw['HomeworkTitle'] ?? 'Untitled',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// Homework Icon
+                        Container(
+                          height: 46,
+                          width: 46,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(.1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: const Icon(
+                            Icons.menu_book_rounded,
+                            color: AppColors.primary,
+                            size: 22,
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "📅 ${formatDate(hw['WorkDate'])}",
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              Text(
-                                "Submission: ${formatDate(hw['SubmissionDate'])}",
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          if ((hw['Remark'] ?? '').isNotEmpty)
-                            Text(
-                              "📝 ${(hw['Remark'] as String).length > 150 ? hw['Remark'].substring(0, 150) + '...' : hw['Remark']}",
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: AppColors.primary,
+                                hw['HomeworkTitle'] ?? "Homework",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                onPressed: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => TeacherAddHomeworkPage(
-                                        homeworkToEdit: hw,
-                                      ),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    fetchHomeworks();
-                                  }
-                                },
                               ),
-                              if (attachmentUrl != null)
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.download_rounded,
-                                    color: AppColors.primary,
+
+                              const SizedBox(height: 8),
+
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  _dateChip(
+                                    Colors.blue,
+                                    Icons.calendar_today,
+                                    formatDate(hw['WorkDate']),
                                   ),
-                                  onPressed: () {
-                                    downloadFile(context, attachmentUrl);
-                                  },
+
+                                  _dateChip(
+                                    Colors.orange,
+                                    Icons.schedule,
+                                    formatDate(hw['SubmissionDate']),
+                                  ),
+                                ],
+                              ),
+
+                              if ((hw['Remark'] ?? "")
+                                  .toString()
+                                  .isNotEmpty) ...[
+                                const SizedBox(height: 8),
+
+                                Text(
+                                  hw['Remark'],
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade700,
+                                    height: 1.4,
+                                  ),
                                 ),
+                              ],
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        Column(
+                          children: [
+                            InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TeacherAddHomeworkPage(
+                                      homeworkToEdit: hw,
+                                    ),
+                                  ),
+                                );
+
+                                if (result == true) {
+                                  fetchHomeworks();
+                                }
+                              },
+                              child: Container(
+                                height: 32,
+                                width: 32,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  color: Colors.orange,
+                                  size: 17,
+                                ),
+                              ),
+                            ),
+
+                            if ((attachmentUrl ?? "")
+                                .toString()
+                                .isNotEmpty) ...[
+                              const SizedBox(height: 8),
+
+                              InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: () {
+                                  downloadFile(context, attachmentUrl);
+                                },
+                                child: Container(
+                                  height: 32,
+                                  width: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.download_rounded,
+                                    color: Colors.green,
+                                    size: 17,
+                                  ),
+                                ),
+                              ),
+                            ],
+
+                            const SizedBox(height: 8),
+
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        elevation: 4,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          "Add Homework",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
         onPressed: () async {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const TeacherAddHomeworkPage()),
           );
+
           if (result == true) {
             fetchHomeworks();
           }
         },
+      ),
+    );
+  }
+
+  Widget _dateChip(Color color, IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

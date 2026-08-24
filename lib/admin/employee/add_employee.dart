@@ -70,9 +70,11 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
   bool _isValidMobile(String mobile) {
     return RegExp(r'^[0-9]{10}$').hasMatch(mobile);
   }
-bool _isValidEmail(String email) {
-  return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-}
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
   Future<void> fetchEmployeeDetails(int id) async {
     setState(() => isPageLoading = true);
 
@@ -202,57 +204,59 @@ bool _isValidEmail(String email) {
 
     setState(() => loadingSection = false);
   }
-void _showError(String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
-}
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> addEmployee() async {
     if (isSaving) return;
 
-   String name = empNameCtrl.text.trim();
-String mobile = contactCtrl.text.trim();
-String email = emailCtrl.text.trim();
+    String name = empNameCtrl.text.trim();
+    String mobile = contactCtrl.text.trim();
+    String email = emailCtrl.text.trim();
 
-if (name.isEmpty) {
-  _showError("Please enter employee name");
-  return;
-}
+    if (name.isEmpty) {
+      _showError("Please enter employee name");
+      return;
+    }
 
-if (mobile.isEmpty) {
-  _showError("Please enter mobile number");
-  return;
-}
+    if (mobile.isEmpty) {
+      _showError("Please enter mobile number");
+      return;
+    }
 
-if (!_isValidMobile(mobile)) {
-  _showError("Mobile number must be 10 digits");
-  return;
-}
+    if (!_isValidMobile(mobile)) {
+      _showError("Mobile number must be 10 digits");
+      return;
+    }
 
-if (email.isNotEmpty && !_isValidEmail(email)) {
-  _showError("Please enter valid email address");
-  return;
-}
+    if (email.isNotEmpty && !_isValidEmail(email)) {
+      _showError("Please enter valid email address");
+      return;
+    }
 
-if (selectedDepartmentId == null) {
-  _showError("Please select department");
-  return;
-}
+    if (selectedDepartmentId == null) {
+      _showError("Please select department");
+      return;
+    }
 
-if (selectedDesignationId == null) {
-  _showError("Please select designation");
-  return;
-}
+    if (selectedDesignationId == null) {
+      _showError("Please select designation");
+      return;
+    }
 
-if (selectedRole == null) {
-  _showError("Please select role");
-  return;
-}
+    if (selectedRole == null) {
+      _showError("Please select role");
+      return;
+    }
 
-if (dob == null) {
-  _showError("Please select date of birth");
-  return;
-}
+    if (dob == null) {
+      _showError("Please select date of birth");
+      return;
+    }
 
     // If role is Teacher then class & section required
     if (selectedRole == "Teacher" &&
@@ -854,10 +858,10 @@ if (dob == null) {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-       maxLength: keyboardType == TextInputType.phone ? 10 : null,
-inputFormatters: keyboardType == TextInputType.phone
-    ? [FilteringTextInputFormatter.digitsOnly]
-    : [],
+        maxLength: keyboardType == TextInputType.phone ? 10 : null,
+        inputFormatters: keyboardType == TextInputType.phone
+            ? [FilteringTextInputFormatter.digitsOnly]
+            : [],
         decoration: InputDecoration(
           counterText: '',
           isDense: true,

@@ -1,33 +1,25 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:sonia_public_school/login_page.dart';
+import 'package:sonia_public_school/dashboard/student_sidebar.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sonia_public_school/Attendance_UI/stu_attendance_page.dart';
-import 'package:sonia_public_school/Exam/exam_schedule.dart';
-import 'package:sonia_public_school/Exam/stu_result.dart';
 import 'package:sonia_public_school/Attendance_UI/attendance_pie_chart.dart';
 import 'package:sonia_public_school/Notification/notification_list.dart';
-import 'package:sonia_public_school/connect_teacher/connect_with_us.dart';
 import 'package:sonia_public_school/dashboard/calendar.dart';
 import 'package:sonia_public_school/dashboard/payment_screen.dart';
 import 'package:sonia_public_school/homework/homework_model.dart';
-import 'package:sonia_public_school/homework/homework_page.dart';
-import 'package:sonia_public_school/dashboard/timetable_page.dart';
 import 'package:sonia_public_school/main.dart';
 import 'package:sonia_public_school/payment/fee_details_page.dart';
 import 'package:sonia_public_school/payment/payment_page.dart';
-import 'package:sonia_public_school/profile_page.dart';
-import 'package:sonia_public_school/school_info_page.dart';
-import 'package:sonia_public_school/complaint/view_complaints_page.dart';
 import 'package:sonia_public_school/subjects_page.dart';
-import 'package:sonia_public_school/syllabus/syllabus.dart';
 import 'package:sonia_public_school/Attendance_UI/attendnce_box.dart';
-import 'package:sonia_public_school/Attendance_UI/stu_attendance_report.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:sonia_public_school/api_service.dart';
 
@@ -65,7 +57,6 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
 
   @override
   void didPopNext() {
-    // jab kisi page se BACK aake dashboard dikhe
     _refreshDashboard();
   }
 
@@ -78,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
-    _refreshDashboard(); // app open / login ke baad
+    _refreshDashboard();
   }
 
   Future<void> _refreshDashboard() async {
@@ -358,174 +349,203 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     int fine,
   ) {
     final totalAmount = dues + fine;
-    print('DEBUG: Dialog opened. Total amount: ₹$totalAmount');
+    TextEditingController amountController = TextEditingController();
 
     showDialog(
       context: dashboardContext,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text(
-            'Confirm Payment',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDialogRow(' Fee Amount:', '₹$dues'),
-              _buildDialogRow(' Fine:', '₹$fine', color: Colors.red),
-              const Divider(),
-              _buildDialogRow('Total Payable:', '₹$totalAmount', isTotal: true),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text(
-                "Cancel",
-                style: TextStyle(color: AppColors.primary),
-              ),
-              onPressed: () {
-                print('DEBUG: Payment cancelled by user from dialog.');
-                Navigator.pop(dialogContext);
-              },
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              child: const Text("Proceed to Pay"),
-              onPressed: () async {
-                Navigator.pop(dialogContext);
+        int balanceAmount = totalAmount;
 
-                final totalDues = dues;
-                final lateFine = fine;
-                print('DEBUG: Proceed to Pay clicked. Starting API process...');
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text(
+                'Confirm Payment',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDialogRow(' Due Amount:', '₹$dues'),
+                  _buildDialogRow(' Fine:', '₹$fine', color: Colors.red),
 
-                ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                  const SnackBar(
-                    content: Text('Initializing payment... Please wait.'),
+                  /// 🔥 FIXED INPUT
+                  _buildInputRow('Pay Amount:', amountController, (value) {
+                    int entered = int.tryParse(value) ?? 0;
+
+                    setStateDialog(() {
+                      balanceAmount = totalAmount - entered;
+                      if (balanceAmount < 0) balanceAmount = 0;
+                    });
+                  }),
+
+                  const Divider(),
+                  _buildDialogRow(
+                    'Total Payable:',
+                    '₹$totalAmount',
+                    isTotal: true,
                   ),
-                );
-                print('DEBUG: SnackBar shown. Calling initiatePayment...');
 
-                final paymentData = await initiatePayment(
-                  amount: totalDues,
-                  fine: lateFine,
-                );
+                  /// 🔥 LIVE BALANCE UPDATE
+                  _buildBalanceRow('Balance:', balanceAmount),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(color: AppColors.primary),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                  },
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  child: const Text("Proceed to Pay"),
+                  onPressed: () async {
+                    int enteredAmount =
+                        int.tryParse(amountController.text) ?? totalAmount;
 
-                if (paymentData != null) {
-                  final paymentUrl = paymentData['payment_url']!;
-                  final refNo = paymentData['ref_no']!;
+                    /// Validation
+                    if (enteredAmount <= 0 || enteredAmount > totalAmount) {
+                      ScaffoldMessenger.of(dashboardContext).showSnackBar(
+                        const SnackBar(content: Text("Enter valid amount")),
+                      );
+                      return;
+                    }
 
-                  print('DEBUG: Init Success. RefNo: $refNo, URL received.');
+                    Navigator.pop(dialogContext);
 
-                  final webViewResult = await Navigator.push(
-                    dashboardContext,
-                    MaterialPageRoute(
-                      builder: (_) => PaymentWebView(
-                        paymentUrl: paymentUrl,
-                        successRedirectUrl: 'flutter://payment-success',
-                        failureRedirectUrl: 'flutter://payment-failure',
-                      ),
-                    ),
-                  );
-                  print(
-                    'DEBUG: WebView closed. Result received: $webViewResult',
-                  );
-
-                  if (webViewResult == 'PAYMENT_COMPLETE') {
-                    print(
-                      'DEBUG: WebView reports completion. Checking final status...',
+                    final paymentData = await initiatePayment(
+                      beforePay: dues,
+                      fine: fine,
+                      amount: enteredAmount,
                     );
 
-                    final finalStatus = await checkPaymentStatus(refNo: refNo);
-                    print('DEBUG: Final Status from API: $finalStatus');
+                    if (paymentData != null) {
+                      final paymentUrl = paymentData['payment_url']!;
+                      final refNo = paymentData['ref_no']!;
 
-                    if (finalStatus == 'success') {
-                      ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                        const SnackBar(content: Text('Payment Successful! ✅')),
-                      );
-                      await fetchDashboardData(context);
-                      print(
-                        'DEBUG: Dashboard data fetched successfully before popping.',
-                      );
-                      Navigator.pop(dashboardContext, true);
-                    } else if (finalStatus == 'pending') {
-                      ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Payment Pending. Check dashboard later.',
+                      final webViewResult = await Navigator.push(
+                        dashboardContext,
+                        MaterialPageRoute(
+                          builder: (_) => PaymentWebView(
+                            paymentUrl: paymentUrl,
+                            successRedirectUrl: 'flutter://payment-success',
+                            failureRedirectUrl: 'flutter://payment-failure',
                           ),
                         ),
                       );
+
+                      if (webViewResult == 'PAYMENT_COMPLETE') {
+                        final finalStatus = await checkPaymentStatus(
+                          refNo: refNo,
+                        );
+
+                        if (finalStatus == 'success') {
+                          ScaffoldMessenger.of(dashboardContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('Payment Successful! ✅'),
+                            ),
+                          );
+                          await fetchDashboardData(context);
+                          Navigator.pop(dashboardContext, true);
+                        } else {
+                          ScaffoldMessenger.of(dashboardContext).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Payment Failed. Status Check Failed/Unknown. ❌',
+                              ),
+                            ),
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(dashboardContext).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Payment process failed or was cancelled. ❌',
+                            ),
+                          ),
+                        );
+                      }
                     } else {
                       ScaffoldMessenger.of(dashboardContext).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Payment Failed. Status Check Failed/Unknown. ❌',
+                            'Could not initialize payment. Please try again.',
                           ),
                         ),
                       );
                     }
-                  } else if (webViewResult == 'PAYMENT_FAILED') {
-                    print('DEBUG: WebView reports failure/cancellation.');
-                    ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Payment process failed or was cancelled. ❌',
-                        ),
-                      ),
-                    );
-                  } else {
-                    print(
-                      'DEBUG: Result not PAYMENT_COMPLETE/FAILED. Status check skipped.',
-                    );
-                    ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Payment process abandoned. Status not confirmed.',
-                        ),
-                      ),
-                    );
-                  }
-                } else {
-                  print('ERROR: initiatePayment failed (paymentData is null).');
-                  ScaffoldMessenger.of(dashboardContext).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Could not initialize payment. Please try again.',
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
+  Widget _buildBalanceRow(String label, int value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
+          ),
+          Text(
+            "₹$value",
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<Map<String, String>?> initiatePayment({
-    required int amount,
+    required int beforePay,
     required int fine,
+    required int amount,
   }) async {
     try {
       final response = await ApiService.post(
         context,
         "/student/payment/initiate",
-        body: {'amount': amount.toString(), 'fine': fine.toString()},
+        body: {
+          'beforepay': beforePay.toString(),
+          'fine': fine.toString(),
+          'amount': amount.toString(),
+        },
       );
 
       if (response == null) {
         debugPrint("❌ initiatePayment: response null");
         return null;
       }
-
+      debugPrint("📤 SENDING DATA:");
+      debugPrint("beforepay: $beforePay");
+      debugPrint("fine: $fine");
+      debugPrint("amount: $amount");
       debugPrint("DEBUG: StatusCode → ${response.statusCode}");
       debugPrint("DEBUG: Body → ${response.body}");
 
@@ -617,6 +637,58 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     );
   }
 
+  Widget _buildInputRow(
+    String label,
+    TextEditingController controller,
+    Function(String) onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          /// 🔹 Label
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
+          ),
+
+          /// 🔹 Only numbers input
+          SizedBox(
+            width: 90,
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.right,
+
+              /// 🔥 MAIN VALIDATION HERE
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+
+              decoration: const InputDecoration(
+                isDense: true,
+                hintText: "0",
+                contentPadding: EdgeInsets.symmetric(vertical: 6),
+                border: UnderlineInputBorder(),
+              ),
+
+              onChanged: (value) {
+                /// Extra safety (optional)
+                if (value.isEmpty) {
+                  controller.text = '';
+                }
+                onChanged(value);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -629,61 +701,155 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
               studentsection: studentsection,
             ),
       appBar: AppBar(
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: AppColors.appBarGradient),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
+        toolbarHeight: 68,
         titleSpacing: 0,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(
-                '$schoolName',
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Welcome back,",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(.85),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    studentName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.school_outlined,
+                        color: Colors.white70,
+                        size: 13,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          schoolName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(.85),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            GestureDetector(
-              child: Icon(Icons.calendar_month_rounded),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => StudentCalendarPage()),
-              ),
+            _appBarIcon(
+              icon: Icons.calendar_month_rounded,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => StudentCalendarPage()),
+                );
+              },
             ),
-            SizedBox(width: 5),
-            GestureDetector(
-              child: Icon(Icons.notifications),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => NotificationListPage()),
-              ),
+
+            const SizedBox(width: 8),
+
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _appBarIcon(
+                  icon: Icons.notifications_none_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => NotificationListPage()),
+                    );
+                  },
+                ),
+
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    height: 16,
+                    width: 16,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "3",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 5),
+
+            const SizedBox(width: 10),
+
             GestureDetector(
               onTap: () => _showSiblingPopup(context),
-              child: CircleAvatar(
-                radius: 15,
-                backgroundColor: Colors.grey.shade200,
-                child: ClipOval(
-                  child: Image.network(
-                    studentPhoto,
-                    width: 30,
-                    height: 30,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        AppAssets.defaultAvatar,
-                        width: 30,
-                        height: 30,
-                        fit: BoxFit.cover,
-                      );
-                    },
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.grey.shade200,
+                  child: ClipOval(
+                    child: studentPhoto.isNotEmpty
+                        ? Image.network(
+                            studentPhoto,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              AppAssets.defaultAvatar,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Image.asset(
+                            AppAssets.defaultAvatar,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 5),
+
+            const SizedBox(width: 8),
           ],
         ),
-        backgroundColor: AppColors.primary,
       ),
       body: isLoading
           ? const Center(
@@ -699,62 +865,21 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            FeePayCard(
-                              dues: dues,
-                              fine: fine,
-                              onCardTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => FeeDetailsPage(),
-                                ),
-                              ),
-                              onPayNowTap: () => _showPaymentConfirmationDialog(
-                                context,
-                                dues,
-                                fine,
-                              ),
-                            ),
-                            GestureDetector(
-                              child: DashboardCard(
-                                title: 'Last Pay',
-                                value: payments.toString(),
-                                borderColor: AppColors.success,
-                                backgroundColor: AppColors.success.shade50,
-                                textColor: AppColors.success,
-                                date: lastPaymentDate,
-                              ),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => PaymentPage(),
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              child: DashboardCard(
-                                title: 'Subjects',
-                                value: subjects.toString(),
-                                borderColor: AppColors.info,
-                                backgroundColor: AppColors.info.shade50,
-                                textColor: AppColors.info,
-                              ),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => SubjectsPage(),
-                                ),
-                              ),
-                            ),
-                          ],
+                        DashboardSummaryCard(
+                          feeDue: dues,
+                          siblingDue: fine,
+                          payments: payments,
+                          subjects: subjects,
+                          lastPaymentDate: lastPaymentDate,
+                          onPayNowTap: () {
+                            _showPaymentConfirmationDialog(context, dues, fine);
+                          },
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 10),
                         GestureDetector(
                           child: AttendanceCard(
                             title: "Today's Attendance",
@@ -770,29 +895,12 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Container(
-                          height: 225,
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.primary.shade100,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.shade200,
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
-                          child: AttendancePieChart(
-                            present: attendance['present'] ?? 0,
-                            absent: attendance['absent'] ?? 0,
-                            leave: attendance['leave'] ?? 0,
-                            halfDay: attendance['half_day'] ?? 0,
-                            workingDays: attendance['working_days'] ?? 0,
-                          ),
+                        AttendancePieChart(
+                          present: attendance['present'] ?? 0,
+                          absent: attendance['absent'] ?? 0,
+                          leave: attendance['leave'] ?? 0,
+                          halfDay: attendance['half_day'] ?? 0,
+                          workingDays: attendance['working_days'] ?? 0,
                         ),
                         const SizedBox(height: 10),
                         buildRecentHomeworks(context, homeworks),
@@ -814,71 +922,276 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   }
 }
 
-class DashboardCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final Color borderColor;
-  final Color backgroundColor;
-  final Color textColor;
-  final String? date;
+Widget _appBarIcon({required IconData icon, required VoidCallback onTap}) {
+  return Material(
+    color: Colors.white.withOpacity(.15),
+    borderRadius: BorderRadius.circular(10),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: SizedBox(
+        height: 38,
+        width: 38,
+        child: Icon(icon, color: Colors.white, size: 21),
+      ),
+    ),
+  );
+}
 
-  const DashboardCard({
+class DashboardSummaryCard extends StatelessWidget {
+  final int feeDue;
+  final int siblingDue;
+  final int payments;
+  final int subjects;
+  final String lastPaymentDate;
+
+  final VoidCallback onPayNowTap;
+
+  const DashboardSummaryCard({
     super.key,
-    required this.title,
-    required this.value,
-    required this.borderColor,
-    required this.backgroundColor,
-    required this.textColor,
-    this.date,
+    required this.feeDue,
+    required this.siblingDue,
+    required this.payments,
+    required this.subjects,
+    required this.lastPaymentDate,
+    required this.onPayNowTap,
   });
+  String get greeting {
+    final hour = DateTime.now().hour;
+
+    if (hour < 12) {
+      return "Good Morning";
+    } else if (hour < 17) {
+      return "Good Afternoon";
+    } else {
+      return "Good Evening";
+    }
+  }
+
+  Widget _item({
+    required BuildContext context,
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String value,
+    String? subtitle,
+    required Widget page,
+
+    bool showPayButton = false,
+    VoidCallback? onPayNow,
+  }) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            children: [
+              Container(
+                height: 38,
+                width: 38,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                value,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+
+              if (subtitle != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    subtitle,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ),
+              if (showPayButton) ...[
+                const SizedBox(height: 6),
+
+                SizedBox(
+                  height: 24,
+                  width: 70,
+                  child: ElevatedButton(
+                    onPressed: onPayNow,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: const Text(
+                      "PAY",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final today = DateFormat("dd MMM, yyyy").format(DateTime.now());
     return Container(
-      width: 98,
-      height: 88,
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border.all(color: borderColor, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 5),
-          if (date != null && date!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 0.0, bottom: 2.0),
-              child: Text(
-                date!,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: textColor.withOpacity(0.8),
-                ),
-              ),
-            )
-          else
-            const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.info],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(.18),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "$greeting 👋",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        color: Colors.white,
+                        size: 13,
+                      ),
+
+                      const SizedBox(width: 5),
+
+                      Text(
+                        today,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  _item(
+                    context: context,
+                    icon: Icons.account_balance_wallet_rounded,
+                    color: Colors.red,
+                    title: "Fee Due",
+                    value: "₹$feeDue",
+                    subtitle: "Sibling ₹$siblingDue",
+                    page: const FeeDetailsPage(),
+
+                    showPayButton: feeDue > 0,
+                    onPayNow: onPayNowTap,
+                  ),
+
+                  Container(height: 55, width: 1, color: Colors.grey.shade300),
+
+                  _item(
+                    context: context,
+                    icon: Icons.payments_rounded,
+                    color: Colors.green,
+                    title: "Payments",
+                    value: payments.toString(),
+                    subtitle: lastPaymentDate,
+                    page: PaymentPage(),
+                  ),
+
+                  Container(height: 55, width: 1, color: Colors.grey.shade300),
+
+                  _item(
+                    context: context,
+                    icon: Icons.menu_book_rounded,
+                    color: Colors.blue,
+                    title: "Subjects",
+                    value: subjects.toString(),
+                    page: SubjectsPage(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -976,10 +1289,7 @@ class InfoCard extends StatelessWidget {
     final String schoolId = item["SchoolId"]?.toString() ?? '';
     final bool hasAttachment =
         attachment != null && attachment.isNotEmpty && schoolId.isNotEmpty;
-    final String folder = isEvent ? 'event' : 'notice';
-    final String fullAttachmentUrl = hasAttachment
-        ? ApiService.attachmentUrl(schoolId, folder, attachment)
-        : '';
+    final String fullAttachmentUrl = hasAttachment ? attachment.toString() : '';
 
     debugPrint("📎 NOTICE ATTACHMENT URL: $fullAttachmentUrl");
 
@@ -1133,448 +1443,6 @@ class NoticesEventsToggle extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class LeftSidebarMenu extends StatelessWidget {
-  final String studentName;
-  final String studentPhoto;
-  final String studentClass;
-  final String studentsection;
-
-  const LeftSidebarMenu({
-    super.key,
-    required this.studentName,
-    required this.studentPhoto,
-    required this.studentClass,
-    required this.studentsection,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 270,
-      child: Drawer(
-        child: ListView(
-          children: [
-            Container(
-              color: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              height: 120,
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundColor: Colors.grey.shade300,
-                    child: ClipOval(
-                      child: Image.network(
-                        studentPhoto,
-                        width: 52,
-                        height: 52,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            AppAssets.defaultAvatar,
-                            width: 52,
-                            height: 52,
-                            fit: BoxFit.cover,
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          studentName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          'Class: $studentClass',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          'Section: ${studentsection.isNotEmpty ? studentsection : "-"}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            sidebarTile(
-              context: context,
-              icon: Icons.dashboard,
-              title: 'Dashboard',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => DashboardScreen()),
-                );
-              },
-            ),
-            // sidebarTile(
-            //   icon: Icons.dashboard,
-            //   context: context,
-            //   title: 'New Dashboard',
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (_) => StudentDashboard()),
-            //     );
-            //   },
-            // ),
-
-            sidebarTile(
-              icon: Icons.person,
-              context: context,
-              title: 'Profile',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => ProfilePage()),
-                );
-              },
-            ),
-
-            sidebarTile(
-              icon: Icons.book,
-              context: context,
-              title: 'Homeworks',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => HomeworkPage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.calendar_month,
-              title: 'Attendance',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => StudentAttendanceScreen()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.calendar_today,
-              title: 'Time-Table',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TimeTablePage()),
-                );
-              },
-            ),
-            // sidebarTile(
-            //   context: context,
-            //   icon: Icons.bus_alert,
-            //   title: 'Bus Tracking',
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (_) => ParentBusTrackingPage()),
-            //     );
-            //   },
-            // ),
-            sidebarTile(
-              context: context,
-              icon: Icons.calendar_month,
-              title: 'Calendar',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => StudentCalendarPage()),
-                );
-              },
-            ),
-
-            sidebarTile(
-              context: context,
-              icon: Icons.subject,
-              title: 'Subjects',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SubjectsPage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.book_sharp,
-              title: 'Syllabus',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SyllabusPage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.receipt_long_outlined,
-              title: 'Exam Schedule',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => ExamSchedulePage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.report,
-              title: 'Complaint',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ViewComplaintPage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.attach_money,
-              title: 'Fees',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FeeDetailsPage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.payment,
-              title: 'Payment',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => PaymentPage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.list_alt_outlined,
-              title: 'Result',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => StudentResultPage()),
-                );
-              },
-            ),
-            sidebarTile(
-              context: context,
-              icon: Icons.school,
-              title: 'School Info',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SchoolInfoPage()),
-                );
-              },
-            ),
-
-            sidebarTile(
-              context: context,
-              icon: Icons.support_agent,
-              title: 'Contact & Support',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ConnectWithUsPage(
-                      teacherId: 0,
-                      teacherName: '',
-                      teacherPhoto: '',
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.danger),
-              title: const Text(
-                'Logout',
-                style: TextStyle(color: AppColors.danger),
-              ),
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: const Text("Logout"),
-                    content: const Text("Are you sure you want to logout?"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(color: AppColors.primary),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          Navigator.pop(context);
-
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.clear();
-                          if (!context.mounted) return;
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (_) => LoginPage()),
-                            (route) => false,
-                          );
-                        },
-                        child: const Text("Logout"),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-Widget sidebarTile({
-  required BuildContext context,
-  required IconData icon,
-  required String title,
-  required VoidCallback onTap,
-}) {
-  return ListTile(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 0),
-    visualDensity: VisualDensity(vertical: -2),
-
-    leading: Icon(icon),
-    title: Text(title),
-
-    onTap: () {
-      Navigator.pop(context);
-      Future.microtask(onTap);
-    },
-  );
-}
-
-class FeePayCard extends StatelessWidget {
-  final int dues;
-  final int fine;
-  final VoidCallback onPayNowTap;
-  final VoidCallback onCardTap;
-
-  const FeePayCard({
-    super.key,
-    required this.dues,
-    required this.fine,
-    required this.onPayNowTap,
-    required this.onCardTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Color primaryColor = Colors.red.shade700;
-    final Color lightColor = Colors.red.shade50;
-
-    // 💡 Condition चेक करें: dues 0 से अधिक है या नहीं
-    final bool showPayButton = dues > 0;
-
-    return GestureDetector(
-      onTap: onCardTap,
-      child: Container(
-        width: 98,
-        height: 88,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: lightColor,
-          border: Border.all(color: primaryColor, width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Fee Amount',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: primaryColor.withOpacity(0.9),
-                fontSize: 13,
-              ),
-            ),
-
-            Text(
-              '₹$dues',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: primaryColor,
-                fontSize: 18,
-                height: 1.0,
-              ),
-            ),
-
-            SizedBox(
-              height: 20,
-              width: double.infinity,
-              child: showPayButton
-                  ? ElevatedButton(
-                      onPressed: onPayNowTap,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        textStyle: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        minimumSize: Size.zero,
-                      ),
-                      child: const Text('PAY NOW'),
-                    )
-                  : Center(
-                      child: Text(
-                        'PAID',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-            ),
-          ],
-        ),
       ),
     );
   }

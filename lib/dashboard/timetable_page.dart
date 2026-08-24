@@ -70,9 +70,9 @@ class _TimeTablePageState extends State<TimeTablePage> {
       debugPrint("🚨 TIMETABLE ERROR: $e");
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Something went wrong")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
     } finally {
       if (!mounted) return;
       setState(() => isLoading = false);
@@ -116,9 +116,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
           isLoading
               ? const Expanded(
                   child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   ),
                 )
               : Expanded(
@@ -195,40 +193,38 @@ class _TimeTablePageState extends State<TimeTablePage> {
                                                 ),
                                               )
                                             : (period['Subject'] == null ||
-                                                    period['Subject']
-                                                        .toString()
-                                                        .trim()
-                                                        .isEmpty)
-                                                ? const Text(
-                                                    "❌ Not Scheduled",
-                                                    style: TextStyle(
-                                                      color: Colors.red,
-                                                      fontSize: 16,
+                                                  period['Subject']
+                                                      .toString()
+                                                      .trim()
+                                                      .isEmpty)
+                                            ? const Text(
+                                                "❌ Not Scheduled",
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
+                                            : Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Subject: ${period['Subject']}",
+                                                    style: const TextStyle(
                                                       fontWeight:
-                                                          FontWeight.bold,
+                                                          FontWeight.w600,
                                                     ),
-                                                  )
-                                                : Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        "Subject: ${period['Subject']}",
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                        "Teacher: ${period['Teacher'] ?? '-'}",
-                                                      ),
-                                                      Text(
-                                                        "Room No: ${period['RoomNo'] ?? '-'}",
-                                                      ),
-                                                    ],
                                                   ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    "Teacher: ${period['Teacher'] ?? '-'}",
+                                                  ),
+                                                  Text(
+                                                    "Room No: ${period['RoomNo'] ?? '-'}",
+                                                  ),
+                                                ],
+                                              ),
                                       ),
                                     ),
                                   ],
@@ -280,8 +276,9 @@ class _TimeTablePageState extends State<TimeTablePage> {
                     day,
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ],

@@ -35,9 +35,6 @@ class ExamSchedulePage extends StatefulWidget {
 }
 
 class _ExamSchedulePageState extends State<ExamSchedulePage> {
-
-
-
   List<Exam> exams = [];
   Exam? selectedExam;
   List<ExamScheduleItem> scheduleContent = [];
@@ -59,11 +56,7 @@ class _ExamSchedulePageState extends State<ExamSchedulePage> {
     setState(() => isLoadingExams = true);
 
     try {
-      final res = await ApiService.post(
-        context,
-        '/get_exam',
-        body: {}, // 🔥 IMPORTANT: empty JSON body
-      );
+      final res = await ApiService.post(context, '/get_exam', body: {});
 
       if (res == null) {
         if (!mounted) return;
@@ -108,9 +101,6 @@ class _ExamSchedulePageState extends State<ExamSchedulePage> {
     _showSnackBar(msg);
   }
 
-  // ====================================================
-  // 🔹 FETCH SCHEDULE (SAFE)
-  // ====================================================
   Future<void> fetchScheduleForExam(String examId) async {
     if (!mounted) return;
 
@@ -168,9 +158,6 @@ class _ExamSchedulePageState extends State<ExamSchedulePage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ====================================================
-  // 🧱 UI (UNCHANGED)
-  // ====================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(

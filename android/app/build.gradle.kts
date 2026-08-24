@@ -12,14 +12,14 @@ plugins {
 android {
     namespace = "com.sonia.apppro"
     compileSdk = 36
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "28.2.13676358"
 
     defaultConfig {
         applicationId = "com.sonia.apppro"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.2"
+        targetSdk = 36
+        versionCode = 10
+        versionName = "2.0.0"
     }
 
     compileOptions {

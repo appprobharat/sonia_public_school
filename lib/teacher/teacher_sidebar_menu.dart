@@ -1,4 +1,7 @@
+import 'package:sonia_public_school/homework/holiday/list_holiday_homework.dart';
+// import 'package:sonia_public_school/leave/list_leaveApproval.dart';
 import 'package:sonia_public_school/teacher/geo_attendance_mark.dart';
+import 'package:sonia_public_school/teacher/roll_no.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -35,7 +38,9 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
   String teacherPhoto = '';
   String teacherClass = '';
   String teacherSection = '';
+  // String selectedSession = "2024-25";
 
+  // List<String> sessionList = ["2022-23", "2023-24", "2024-25"];
   @override
   void initState() {
     super.initState();
@@ -56,13 +61,11 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
 
   String getPhotoUrl(String photo) {
     if (photo.isEmpty) return '';
-    return photo.startsWith('http')
-        ? photo
-        : '${ApiService.Url}/$photo';
+    return photo.startsWith('http') ? photo : '${ApiService.Url}/$photo';
   }
 
   void _navigate(BuildContext context, Widget page) {
-    Navigator.pop(context); // ✅ close drawer
+    Navigator.pop(context);
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
@@ -107,49 +110,146 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
       child: ListView(
         children: [
           Container(
-            color: AppColors.primary,
-            height: 130,
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundImage: teacherPhoto.isNotEmpty
-                      ? NetworkImage(getPhotoUrl(teacherPhoto))
-                      : const AssetImage('assets/images/logo.png')
-                            as ImageProvider,
+            height: 95,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.info],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(.22),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        teacherName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Class Teacher',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                      Text(
-                        '$teacherClass - $teacherSection',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+              ],
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -25,
+                  right: -20,
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(.08),
+                      shape: BoxShape.circle,
+                    ),
                   ),
+                ),
+
+                Positioned(
+                  bottom: -20,
+                  left: -20,
+                  child: Container(
+                    width: 55,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(.05),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+
+                Row(
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage: teacherPhoto.isNotEmpty
+                                ? NetworkImage(getPhotoUrl(teacherPhoto))
+                                : const AssetImage(AppAssets.defaultAvatar)
+                                      as ImageProvider,
+                          ),
+                        ),
+
+                        Positioned(
+                          bottom: 2,
+                          right: 2,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              "👨‍🏫 Teacher",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          Text(
+                            teacherName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(height: 2),
+
+                          Text(
+                            "$teacherClass • ${teacherSection.isEmpty ? "-" : teacherSection}",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(.85),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-
           sidebarItem(
             context,
             Icons.dashboard,
@@ -162,6 +262,18 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             'Mark Geo Attd.',
             () => _navigate(context, const GeoAttendanceTeacher()),
           ),
+          sidebarItem(
+            context,
+            Icons.format_list_numbered,
+            'Update Roll no',
+            () => _navigate(context, const UpdateRollNoPage()),
+          ),
+          // sidebarItem(
+          //   context,
+          //   Icons.leave_bags_at_home_rounded,
+          //   'Approve Leave',
+          //   () => _navigate(context, const LeaveApprovalListPage()),
+          // ),
           sidebarItem(
             context,
             Icons.person,
@@ -185,6 +297,12 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             Icons.book,
             'Homeworks',
             () => _navigate(context, const TeacherHomeworkPage()),
+          ),
+          sidebarItem(
+            context,
+            Icons.collections_bookmark,
+            'Holiday-Homeworks',
+            () => _navigate(context, const ListHolidayHomework()),
           ),
           sidebarItem(
             context,
@@ -292,17 +410,53 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
     );
   }
 
-  ListTile sidebarItem(
+  Widget sidebarItem(
     BuildContext context,
     IconData icon,
     String title,
     VoidCallback onTap,
   ) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      visualDensity: const VisualDensity(vertical: -3),
-      onTap: onTap,
+    final colors = {
+      "Dashboard": Colors.indigo,
+      "Profile": Colors.deepPurple,
+      "Update Roll no": Colors.blue,
+      // "Approve Leave": Colors.orange,
+      "Mark Attendance": Colors.green,
+      "Attendance Report": Colors.teal,
+      "Homeworks": Colors.amber,
+      "Student Alert": Colors.red,
+      "Assign Marks": Colors.purple,
+      "Syllabus": Colors.cyan,
+      "Exam Schedule": Colors.deepOrange,
+      "Assign Skills": Colors.pink,
+      "Result": Colors.lightBlue,
+      "Timetable": Colors.indigo,
+      "Complaint": Colors.red,
+      "Payments": Colors.green,
+      "My Attendance": Colors.blueGrey,
+      "School Info": Colors.brown,
+      "Chat With Students": Colors.blue,
+    };
+    final Color iconColor = colors[title] ?? AppColors.primary;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: Icon(icon, size: 20, color: iconColor),
+          title: Text(title, style: const TextStyle(fontSize: 14)),
+          visualDensity: const VisualDensity(vertical: -3),
+          dense: true,
+          onTap: onTap,
+          trailing: const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 15,
+            color: Colors.grey,
+          ),
+        ),
+
+        // 👇 thin divider
+        const Divider(height: 1, thickness: 0.5, indent: 16, endIndent: 16),
+      ],
     );
   }
 }

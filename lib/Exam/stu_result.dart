@@ -22,19 +22,13 @@ class _StudentResultPageState extends State<StudentResultPage> {
     fetchExams();
   }
 
-  // ====================================================
-  // 🔹 FETCH EXAMS (SAFE)
-  // ====================================================
   Future<void> fetchExams() async {
     if (!mounted) return;
 
     setState(() => isExamLoading = true);
 
     try {
-      final res = await ApiService.post(
-        context,
-        '/get_exam',
-      );
+      final res = await ApiService.post(context, '/get_exam');
 
       if (res == null) return;
 
@@ -119,9 +113,6 @@ class _StudentResultPageState extends State<StudentResultPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ====================================================
-  // 🧱 UI (UNCHANGED)
-  // ====================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,7 +129,6 @@ class _StudentResultPageState extends State<StudentResultPage> {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            // 🔽 Exam Dropdown
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(

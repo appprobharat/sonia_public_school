@@ -29,8 +29,7 @@ class _TeacherComplaintDetailPageState
   List<dynamic> history = [];
   bool isLoading = true;
 
-  final String apiUrl =
-      '${ApiService.Url}/api/teacher/complaint/history';
+  final String apiUrl = '${ApiService.Url}/api/teacher/complaint/history';
 
   @override
   void initState() {
@@ -39,52 +38,50 @@ class _TeacherComplaintDetailPageState
   }
 
   // ---------------- FETCH HISTORY ----------------
- Future<void> fetchComplaintHistory() async {
-  debugPrint("🟡 fetchComplaintHistory START");
-  debugPrint("🆔 ComplaintId: ${widget.complaintId}");
+  Future<void> fetchComplaintHistory() async {
+    debugPrint("🟡 fetchComplaintHistory START");
+    debugPrint("🆔 ComplaintId: ${widget.complaintId}");
 
-  try {
-    final response = await ApiService.post(
-      context,
-      '/teacher/complaint/history',
-      body: {
-        'ComplaintId': widget.complaintId.toString(),
-      },
-    );
+    try {
+      final response = await ApiService.post(
+        context,
+        '/teacher/complaint/history',
+        body: {'ComplaintId': widget.complaintId.toString()},
+      );
 
-    // token expired → AuthHelper logout kara dega
-    if (response == null || !mounted) return;
+      // token expired → AuthHelper logout kara dega
+      if (response == null || !mounted) return;
 
-    debugPrint("🟢 STATUS CODE: ${response.statusCode}");
-    debugPrint("📦 RAW BODY: ${response.body}");
+      debugPrint("🟢 STATUS CODE: ${response.statusCode}");
+      debugPrint("📦 RAW BODY: ${response.body}");
 
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
 
-      setState(() {
-        history = decoded is List ? decoded : [];
-        isLoading = false;
-      });
+        setState(() {
+          history = decoded is List ? decoded : [];
+          isLoading = false;
+        });
 
-      debugPrint("📊 HISTORY COUNT: ${history.length}");
-    } else {
+        debugPrint("📊 HISTORY COUNT: ${history.length}");
+      } else {
+        setState(() {
+          history = [];
+          isLoading = false;
+        });
+        debugPrint("⚠️ Non-200 response");
+      }
+    } catch (e) {
+      debugPrint("❌ fetchComplaintHistory ERROR: $e");
+      if (!mounted) return;
       setState(() {
         history = [];
         isLoading = false;
       });
-      debugPrint("⚠️ Non-200 response");
     }
-  } catch (e) {
-    debugPrint("❌ fetchComplaintHistory ERROR: $e");
-    if (!mounted) return;
-    setState(() {
-      history = [];
-      isLoading = false;
-    });
-  }
 
-  debugPrint("🔚 fetchComplaintHistory END");
-}
+    debugPrint("🔚 fetchComplaintHistory END");
+  }
 
   // ---------------- HELPERS ----------------
   String getStatusText(int status) => status == 1 ? "Solved" : "Pending";
@@ -106,8 +103,10 @@ class _TeacherComplaintDetailPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text("Complaint Details", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Complaint Details",
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: AppColors.primary,
         leading: const BackButton(color: Colors.white),
       ),
@@ -124,7 +123,8 @@ class _TeacherComplaintDetailPageState
                   Card(
                     elevation: 4,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -141,23 +141,30 @@ class _TeacherComplaintDetailPageState
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(Icons.date_range,
-                                  color: AppColors.primary),
+                              const Icon(
+                                Icons.date_range,
+                                color: AppColors.primary,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 formatDate(widget.date),
-                                style:
-                                    const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const Spacer(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: getStatusColor(widget.status)
-                                      .withOpacity(0.1),
+                                  color: getStatusColor(
+                                    widget.status,
+                                  ).withOpacity(0.1),
                                   border: Border.all(
-                                      color: getStatusColor(widget.status)),
+                                    color: getStatusColor(widget.status),
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
@@ -184,8 +191,7 @@ class _TeacherComplaintDetailPageState
                   // 🧾 History Section
                   const Text(
                     "Complaint History",
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   if (history.isEmpty)
@@ -208,20 +214,26 @@ class _TeacherComplaintDetailPageState
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.timeline,
-                                      size: 18, color: AppColors.primary),
+                                  const Icon(
+                                    Icons.timeline,
+                                    size: 18,
+                                    color: AppColors.primary,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     formatDate(item['Date'] ?? ''),
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                item['Description']
-                                        ?.replaceAll(r'\r\n', '\n') ??
+                                item['Description']?.replaceAll(
+                                      r'\r\n',
+                                      '\n',
+                                    ) ??
                                     '',
                                 style: const TextStyle(fontSize: 14),
                               ),

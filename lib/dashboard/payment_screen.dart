@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:sonia_public_school/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebView extends StatefulWidget {
   final String paymentUrl;
-  final String successRedirectUrl; 
-  final String failureRedirectUrl; 
+  final String successRedirectUrl;
+  final String failureRedirectUrl;
   const PaymentWebView({
     super.key,
     required this.paymentUrl,
-    required this.successRedirectUrl, 
+    required this.successRedirectUrl,
     required this.failureRedirectUrl,
   });
   @override
@@ -31,24 +32,31 @@ class _PaymentWebViewState extends State<PaymentWebView> {
               _isLoading = false;
             });
           },
-          onNavigationRequest: (NavigationRequest request) {
+          onNavigationRequest: (NavigationRequest request) async {
             final url = request.url;
+            final lowerUrl = url.toLowerCase();
 
-            if (url.startsWith(widget.successRedirectUrl)) {
-         
-              Navigator.pop(context, 'PAYMENT_COMPLETE');
-              print('DEBUG: Payment Success URL detected. Returning result.');
+            // ✅ Handle UPI
+            if (url.startsWith("upi://pay")) {
+              await launchUrl(
+                Uri.parse(url),
+                mode: LaunchMode.externalApplication,
+              );
               return NavigationDecision.prevent;
-            } 
-       
-            else if (url.startsWith(widget.failureRedirectUrl) || 
-                     url.contains('cancel') ||
-                     url.contains('fail')) 
-            {
-        
+            }
+
+            // ✅ Success
+            if (url.contains(widget.successRedirectUrl)) {
+              Navigator.pop(context, 'PAYMENT_COMPLETE');
+              return NavigationDecision.prevent;
+            }
+
+            // ✅ Failure
+            if (url.contains(widget.failureRedirectUrl) ||
+                lowerUrl.contains('cancel') ||
+                lowerUrl.contains('fail')) {
               Navigator.pop(context, 'PAYMENT_FAILED');
-              print('DEBUG: Payment Failure/Cancel URL detected. Returning result.');
-              return NavigationDecision.prevent; 
+              return NavigationDecision.prevent;
             }
 
             return NavigationDecision.navigate;

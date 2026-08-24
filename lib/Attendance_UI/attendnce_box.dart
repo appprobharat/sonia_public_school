@@ -41,7 +41,6 @@ class AttendanceCard extends StatelessWidget {
         return Colors.black;
       default:
         return Colors.grey;
-      // fallback
     }
   }
 

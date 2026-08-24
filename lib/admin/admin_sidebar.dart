@@ -63,9 +63,7 @@ class _AdminsidebarState extends State<Adminsidebar> {
 
   String getPhotoUrl(String photo) {
     if (photo.isEmpty) return '';
-    return photo.startsWith('http')
-        ? photo
-        : '${ApiService.Url}/$photo';
+    return photo.startsWith('http') ? photo : '${ApiService.Url}/$photo';
   }
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(

@@ -51,11 +51,8 @@ class ViewHomeworksPage extends StatelessWidget {
                         color: AppColors.primary,
                       ),
                       onPressed: () {
-                        String fileUrl = hw['Attachment'];
-                        if (!fileUrl.startsWith('http')) {
-                          fileUrl =
-                              ApiService.homeworkAttachment(fileUrl);
-                        }
+                        String fileUrl = hw['Attachment'].toString();
+
                         downloadFile(context, fileUrl);
                       },
                     )

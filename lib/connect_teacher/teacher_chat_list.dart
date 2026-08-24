@@ -34,10 +34,7 @@ class _TeacherChatStudentListPageState
     setState(() => _isLoading = true);
 
     try {
-      final res = await ApiService.post(
-        context,
-        "/teacher/student/list",
-      );
+      final res = await ApiService.post(context, "/teacher/student/list");
 
       // AuthHelper already handles 401 + logout
       if (res == null) return;
@@ -68,9 +65,9 @@ class _TeacherChatStudentListPageState
       debugPrint("🚨 FETCH STUDENTS ERROR: $e");
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Something went wrong")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
     } finally {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -86,10 +83,9 @@ class _TeacherChatStudentListPageState
     setState(() {
       filteredStudents = students
           .where(
-            (s) => s['StudentName']
-                .toString()
-                .toLowerCase()
-                .contains(query.toLowerCase()),
+            (s) => s['StudentName'].toString().toLowerCase().contains(
+              query.toLowerCase(),
+            ),
           )
           .toList();
     });
@@ -140,20 +136,22 @@ class _TeacherChatStudentListPageState
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : filteredStudents.isEmpty
-              ? const Center(
-                  child: Text(
-                    "No students found",
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: filteredStudents.length,
-                  itemBuilder: (context, index) {
-                    return _buildStudentCard(filteredStudents[index]);
-                  },
-                ),
+          ? const Center(
+              child: Text(
+                "No students found",
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            )
+          : ListView.builder(
+              itemCount: filteredStudents.length,
+              itemBuilder: (context, index) {
+                return _buildStudentCard(filteredStudents[index]);
+              },
+            ),
     );
   }
 
@@ -178,7 +176,8 @@ class _TeacherChatStudentListPageState
         leading: CircleAvatar(
           radius: 28,
           backgroundColor: Colors.grey.shade200,
-          backgroundImage: student['StudentPhoto'] != null &&
+          backgroundImage:
+              student['StudentPhoto'] != null &&
                   student['StudentPhoto'].toString().isNotEmpty
               ? NetworkImage(student['StudentPhoto'])
               : null,

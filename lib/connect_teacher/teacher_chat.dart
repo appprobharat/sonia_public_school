@@ -51,9 +51,7 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
       final res = await ApiService.post(
         context,
         "/teacher/messages",
-        body: {
-          "StudentId": widget.studentId.toString(),
-        },
+        body: {"StudentId": widget.studentId.toString()},
       );
 
       // AuthHelper already handles 401 + logout
@@ -101,10 +99,7 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
       final res = await ApiService.post(
         context,
         "/teacher/message/send",
-        body: {
-          "receiver_id": widget.studentId.toString(),
-          "message": text,
-        },
+        body: {"receiver_id": widget.studentId.toString(), "message": text},
       );
 
       if (res == null) return;
@@ -184,83 +179,81 @@ class _TeacherChatScreenState extends State<TeacherChatScreen> {
         children: [
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
                 : messages.isEmpty
-                    ? const Center(child: Text("No messages yet"))
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(10),
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final msg = messages[index];
-                          final isTeacher =
-                              msg['sender_type'] == "teacher";
+                ? const Center(child: Text("No messages yet"))
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(10),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = messages[index];
+                      final isTeacher = msg['sender_type'] == "teacher";
 
-                          return Align(
-                            alignment: isTeacher
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: Column(
-                              crossAxisAlignment: isTeacher
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
+                      return Align(
+                        alignment: isTeacher
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: isTeacher
+                              ? CrossAxisAlignment.end
+                              : CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isTeacher
+                                    ? AppColors.primary.shade400
+                                    : Colors.grey.shade300,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(12),
+                                  topRight: const Radius.circular(12),
+                                  bottomLeft: Radius.circular(
+                                    isTeacher ? 12 : 0,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: isTeacher
-                                        ? AppColors.primary.shade400
-                                        : Colors.grey.shade300,
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: const Radius.circular(12),
-                                      topRight: const Radius.circular(12),
-                                      bottomLeft: Radius.circular(
-                                        isTeacher ? 12 : 0,
-                                      ),
-                                      bottomRight: Radius.circular(
-                                        isTeacher ? 0 : 12,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    msg['message'] ?? '',
-                                    style: TextStyle(
-                                      color: isTeacher
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontSize: 15,
-                                    ),
+                                  bottomRight: Radius.circular(
+                                    isTeacher ? 0 : 12,
                                   ),
                                 ),
-                                if (msg['created_at'] != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8,
-                                      right: 8,
-                                      bottom: 4,
-                                    ),
-                                    child: Text(
-                                      DateFormat('dd MMM, hh:mm a').format(
-                                        DateTime.parse(
-                                          msg['created_at'],
-                                        ).toLocal(),
-                                      ),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                              ),
+                              child: Text(
+                                msg['message'] ?? '',
+                                style: TextStyle(
+                                  color: isTeacher
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
-                          );
-                        },
-                      ),
+                            if (msg['created_at'] != null)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 8,
+                                  right: 8,
+                                  bottom: 4,
+                                ),
+                                child: Text(
+                                  DateFormat('dd MMM, hh:mm a').format(
+                                    DateTime.parse(msg['created_at']).toLocal(),
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
           ),
           _buildMessageInput(),
         ],

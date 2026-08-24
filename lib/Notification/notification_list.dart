@@ -24,43 +24,40 @@ class _NotificationListPageState extends State<NotificationListPage> {
     fetchNotifications();
   }
 
-Future<void> fetchNotifications() async {
-  try {
-    final response = await ApiService.post(
-      context,
-      "/student/notifications",
-    );
+  Future<void> fetchNotifications() async {
+    try {
+      final response = await ApiService.post(context, "/student/notifications");
 
-    // 🔐 ApiService already handles logout + token
-    if (response == null) {
-      setState(() => isLoading = false);
-      return;
-    }
+      // 🔐 ApiService already handles logout + token
+      if (response == null) {
+        setState(() => isLoading = false);
+        return;
+      }
 
-    debugPrint("📥 Status: ${response.statusCode}");
-    debugPrint("📥 Body: ${response.body}");
+      debugPrint("📥 Status: ${response.statusCode}");
+      debugPrint("📥 Body: ${response.body}");
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      if (data['status'] == true && data['data'] != null) {
-        setState(() {
-          notifications = List.from(data['data']);
-          isLoading = false;
-        });
+        if (data['status'] == true && data['data'] != null) {
+          setState(() {
+            notifications = List.from(data['data']);
+            isLoading = false;
+          });
+        } else {
+          setState(() => isLoading = false);
+        }
       } else {
         setState(() => isLoading = false);
       }
-    } else {
-      setState(() => isLoading = false);
-    }
-  } catch (e) {
-    debugPrint("🚨 Notification error: $e");
-    if (mounted) {
-      setState(() => isLoading = false);
+    } catch (e) {
+      debugPrint("🚨 Notification error: $e");
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
-}
 
   void handleNotificationTap(String type, int id, Map<String, dynamic> item) {
     if (type == "homework") {
@@ -124,7 +121,9 @@ Future<void> fetchNotifications() async {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary),)
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : notifications.isEmpty
           ? const Center(child: Text("No notifications available"))
           : ListView.builder(

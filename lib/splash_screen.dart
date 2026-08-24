@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:sonia_public_school/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:sonia_public_school/api_service.dart';
@@ -14,16 +15,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkForUpdate();
+
+    Future.microtask(() async {
+      await _checkForUpdate();
+    });
   }
 
   Future<void> _checkForUpdate() async {
     try {
-      final AppUpdateInfo updateInfo = await InAppUpdate.checkForUpdate();
+      if (Platform.isAndroid) {
+        final AppUpdateInfo updateInfo = await InAppUpdate.checkForUpdate();
 
-      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
-        // 🔴 FORCE UPDATE
-        await InAppUpdate.performImmediateUpdate();
+        if (updateInfo.updateAvailability ==
+            UpdateAvailability.updateAvailable) {
+          await InAppUpdate.performImmediateUpdate();
+        }
       }
     } catch (e) {
       debugPrint("In-app update error: $e");
