@@ -1,5 +1,5 @@
 import 'package:sonia_public_school/homework/holiday/list_holiday_homework.dart';
-// import 'package:sonia_public_school/leave/list_leaveApproval.dart';
+import 'package:sonia_public_school/leave/list_leaveApproval.dart';
 import 'package:sonia_public_school/teacher/geo_attendance_mark.dart';
 import 'package:sonia_public_school/teacher/roll_no.dart';
 import 'package:flutter/material.dart';
@@ -268,12 +268,12 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             'Update Roll no',
             () => _navigate(context, const UpdateRollNoPage()),
           ),
-          // sidebarItem(
-          //   context,
-          //   Icons.leave_bags_at_home_rounded,
-          //   'Approve Leave',
-          //   () => _navigate(context, const LeaveApprovalListPage()),
-          // ),
+          sidebarItem(
+            context,
+            Icons.leave_bags_at_home_rounded,
+            'Approve Leave',
+            () => _navigate(context, const LeaveApprovalListPage()),
+          ),
           sidebarItem(
             context,
             Icons.person,

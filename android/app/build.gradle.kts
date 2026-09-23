@@ -18,7 +18,7 @@ android {
         applicationId = "com.sonia.apppro"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 10
+        versionCode = 13
         versionName = "2.0.0"
     }
 
